@@ -479,14 +479,6 @@ kubectl get pods -n netapp-acc-operator
 ----
 kubectl edit AstraControlCenter -n [netapp-acc or custom namespace]
 ----
-. Astraのバージョン番号を変更します (`astraVersion` の内部 `spec`）をアップグレードするバージョンにアップグレードします。
-+
-[listing, subs="+quotes"]
-----
-spec:
-  accountName: "Example"
-  *astraVersion: "[Version number]"*
-----
 . Astraのバージョン番号を変更します (`astraVersion` の内部 `spec`）から `23.07.0` 終了： `23.10.0`：
 +
 
