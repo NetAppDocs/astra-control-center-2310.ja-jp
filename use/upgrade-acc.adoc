@@ -487,6 +487,18 @@ spec:
   accountName: "Example"
   *astraVersion: "[Version number]"*
 ----
+. Astraのバージョン番号を変更します (`astraVersion` の内部 `spec`）から `23.07.0` 終了： `23.10.0`：
++
+
+NOTE: 現在のリリースより2つ以上遅れているバージョンから直接アップグレードすることはできません。リリースされたバージョンの完全なリストについては、 link:../release-notes/whats-new.html["リリースノート"]。
+
++
+[listing, subs="+quotes"]
+----
+spec:
+  accountName: "Example"
+  *astraVersion: "[Version number]"*
+----
 . イメージレジストリパスが、イメージをでプッシュしたレジストリパスと一致することを確認します <<イメージをローカルレジストリに追加します,前の手順>>。更新 `imageRegistry` の内部 `spec` 前回のインストール以降にレジストリが変更されている場合。
 +
 [listing]

@@ -3526,4 +3526,6 @@ Astra Tridentは、インポートと検出のプロセスで自動的にイン�
   <block id="be11c74c1dd7f307bb80183a90dc2067" category="sidebar">はじめに</block>
   <block id="6bdc7c13872089b240b2d2e134bf8244" category="sidebar">外部証明書マネージャを設定します</block>
   <block id="1fe917b01f9a3f87fa2d7d3b7643fac1" category="sidebar">よく寄せられる質問</block>
+  <block id="424ceef1136fb58527f241d7cdf1c5e9" category="list-text">Astraのバージョン番号を変更します <block ref="bbdbf70444e48a34a4a7e7d708d85eec" prefix="(" category="inline-code"></block> の内部<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block>）から<block ref="e43c70c154432522a389a51dc9db6b94" prefix=" " category="inline-code"></block> 終了：<block ref="84976609aebb6439476255d5ef8280bb" prefix=" " category="inline-code"></block>：</block>
+  <block id="7f8303559ee1d0bdcb1d09fd27feaa43" category="admonition">現在のリリースより2つ以上遅れているバージョンから直接アップグレードすることはできません。リリースされたバージョンの完全なリストについては、 <block ref="6828c83fc2e1f023c92b48e8acd1d196" category="inline-link-macro-rx"></block>。</block>
 </blocks>
