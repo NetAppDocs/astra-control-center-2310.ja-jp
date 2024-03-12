@@ -1,0 +1,107 @@
+---
+sidebar: sidebar 
+permalink: get-started/cert-manager-prereqs.html 
+keywords: astra control center, prereq, requirement, cert manager, install 
+summary: クラスタに証明書管理ツールがすでに存在する場合は、前提条件となるいくつかの手順を実行して、Astra Control Centerが独自の証明書管理ツールをインストールしないようにする必要があります。 
+---
+= 外部証明書マネージャを設定します
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+[role="lead"]
+Kubernetesクラスタに証明書マネージャがすでに存在する場合は、Astra Control Centerで独自の証明書マネージャがインストールされないように、いくつかの前提条件となる手順を実行する必要があります。
+
+.手順
+. 証明書マネージャがインストールされていることを確認します。
++
+[source, console]
+----
+kubectl get pods -A | grep 'cert-manager'
+----
++
+回答例：
+
++
+[listing]
+----
+cert-manager   essential-cert-manager-84446f49d5-sf2zd              1/1     Running    0     6d5h
+cert-manager   essential-cert-manager-cainjector-66dc99cc56-9ldmt   1/1     Running    0     6d5h
+cert-manager   essential-cert-manager-webhook-56b76db9cc-fjqrq      1/1     Running    0     6d5h
+----
+. の証明書とキーのペアを作成します `astraAddress` FQDN：
++
+[source, console]
+----
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt
+----
++
+回答例：
+
++
+[listing]
+----
+Generating a 2048 bit RSA private key
+..................+++
+........................................+++
+writing new private key to 'tls.key'
+----
+. 以前に生成したファイルを使用してシークレットを作成します。
++
+[source, console]
+----
+kubectl create secret tls selfsigned-tls --key tls.key --cert tls.crt -n <cert-manager-namespace>
+----
++
+回答例：
+
++
+[listing]
+----
+secret/selfsigned-tls created
+----
+. を作成します `ClusterIssuer` *とまったく同じ*のファイル。ただし、の名前空間の場所が含まれます `cert-manager` ポッドがインストールされます。
++
+[source, yaml]
+----
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: astra-ca-clusterissuer
+  namespace: <cert-manager-namespace>
+spec:
+  ca:
+    secretName: selfsigned-tls
+----
++
+[source, console]
+----
+kubectl apply -f ClusterIssuer.yaml
+----
++
+回答例：
+
++
+[listing]
+----
+clusterissuer.cert-manager.io/astra-ca-clusterissuer created
+----
+. を確認します `ClusterIssuer` が正常に起動しました。 `Ready` はである必要があります `True` 次の手順に進む前に、次の手順
++
+[source, console]
+----
+kubectl get ClusterIssuer
+----
++
+回答例：
+
++
+[listing]
+----
+NAME                     READY   AGE
+astra-ca-clusterissuer   True    9s
+----
+. を実行します link:../get-started/install_acc.html["Astra Control Center のインストールプロセス"]。があります link:../get-started/install_acc.html#configure-astra-control-center["Astra Control CenterクラスタYAMLの必須の設定手順"] CRD値を変更して、証明書マネージャが外部にインストールされていることを示します。Astra Control Centerが外部証明書マネージャを認識するように、インストール時にこの手順を完了する必要があります。
+

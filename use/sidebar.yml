@@ -1,0 +1,62 @@
+---
+section: use
+title: Astra Control Center を使用
+entries:
+- title: アプリの管理を開始します
+  url: "/use/manage-apps.html"
+- title: アプリを保護します
+  entries:
+  - title: 保護の概要
+    url: "/use/protection-overview.html"
+  - title: アプリを保護します
+    url: "/use/protect-apps.html"
+  - title: アプリケーションのリストア
+    url: "/use/restore-apps.html"
+  - title: ストレージバックエンド間でアプリケーションをレプリケート
+    url: "/use/replicate_snapmirror.html"
+  - title: アプリケーションのクローン作成と移行
+    url: "/use/clone-apps.html"
+  - title: アプリケーション実行フックを管理します
+    url: "/use/execution-hooks.html"
+  - title: Astra Control Centerを使用したAstra Control Centerの保護
+    url: "/use/protect-acc-with-acc.html"
+- title: アプリケーションとクラスタの健常性を監視
+  entries:
+  - title: ダッシュボードの概要
+    url: "/use/view-dashboard.html"
+  - title: クラスタの健常性と詳細
+    url: "/use/view-clusters.html"
+  - title: アプリケーションの健全性と詳細
+    url: "/use/view-apps.html"
+- title: アカウントを管理します
+  entries:
+  - title: ローカルユーザとロールを管理します
+    url: "/use/manage-local-users-and-roles.html"
+  - title: リモート認証を管理する
+    url: "/use/manage-remote-authentication.html"
+  - title: リモートユーザとリモートグループを管理します
+    url: "/use/manage-remote-users-groups.html"
+  - title: 通知を管理します
+    url: "/use/manage-notifications.html"
+  - title: クレデンシャルを管理する
+    url: "/use/manage-credentials.html"
+  - title: アカウントのアクティビティを監視
+    url: "/use/view-account-activity.html"
+  - title: 既存のライセンスを更新する
+    url: "/use/update-licenses.html"
+- title: バケットを管理する
+  url: "/use/manage-buckets.html"
+- title: ストレージバックエンドを管理します
+  url: "/use/manage-backend.html"
+- title: 実行中のタスクを監視します
+  url: "/use/monitor-running-tasks.html"
+- title: Cloud Insights とFluentdを使用してインフラを監視します
+  url: "/use/monitor-protect.html"
+- title: アプリケーションとクラスタの管理を解除します
+  url: "/use/unmanage.html"
+- title: Astra Control Center をアップグレードします
+  url: "/use/upgrade-acc.html"
+- title: Astra Control Provisionerを有効にする
+  url: "/use/enable-acp.html"
+- title: Astra Control Center をアンインストールします
+  url: "/use/uninstall_acc.html"

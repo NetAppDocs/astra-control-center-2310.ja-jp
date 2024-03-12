@@ -1,0 +1,244 @@
+---
+sidebar: sidebar 
+permalink: release-notes/whats-new.html 
+keywords: 'what"s new, bugs, bug fixes, new features, enhancements' 
+summary: ネットアップは Astra Control Center を定期的に更新して、新機能、拡張機能、バグ修正を提供します。 
+---
+= このリリースの Astra Control Center の新機能
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/release-notes/
+
+
+[role="lead"]
+最新リリースのAstra Control Centerを発表しました。
+
+
+
+== 2023年11月7日（23.10.0）
+
+[[nas-eco-backup-restore]]
+.新機能とサポート
+* * ONTAP NAS経済性に優れたドライバベースのストレージバックエンドを使用したアプリケーションのバックアップとリストア機能*：バックアップとリストアの処理を `ontap-nas-economy` いくつかの link:../use/protect-apps.html#enable-backup-and-restore-for-ontap-nas-economy-operations["シンプルなステップ"^]。
+* *変更不可のバックアップ*：Astra Controlが新たにサポート link:../concepts/data-protection.html#immutable-backups["変更不可の読み取り専用バックアップ"^] マルウェアやその他の脅威に対する追加のセキュリティレイヤとして。
+* * Astra Control Provisionerのご紹介*
++
+23.10リリースでは、Astra ControlにAstra Control Provisionerという新しいソフトウェアコンポーネントが導入されています。このソフトウェアコンポーネントは、Astra Controlのライセンスを取得したすべてのユーザが使用できます。Astra Control Provisionerでは、Astra Tridentよりも高度な管理機能とストレージプロビジョニング機能を利用できます。これらの機能は、Astra Controlをご利用のすべてのお客様が追加コストなしで利用できます。
+
++
+** * Astra Control Provisionerの利用を開始*
+可能です link:../use/enable-acp.html["Astra Control Provisionerを有効にする"^] Astra Trident 23.10を使用するように環境をインストールして設定している場合。
+** * Astra Control Provisionerの機能*
++
+Astra Control Provisioner 23.10リリースでは、次の機能を使用できます。
+
++
+*** * Kerberos 5暗号化によるストレージバックエンドセキュリティの強化*：ストレージセキュリティを link:../use-acp/configure-storage-backend-encryption.html["暗号化の有効化"^] 管理対象クラスタとストレージバックエンド間のトラフィック用。Astra Control Provisionerは、Red Hat OpenShiftクラスタからAzure NetApp FilesおよびオンプレミスのONTAPボリュームへのNFSv4.1接続でKerberos 5暗号化をサポートします。
+*** * Snapshotを使用したデータのリカバリ*：Astra Control Provisionerを使用すると、Snapshotからインプレースで迅速にボリュームをリストアできます。 `TridentActionSnapshotRestore` （TASR）CR。
+*** * SnapMirrorの機能拡張*：Astra ControlからONTAPクラスタに直接接続できない環境やONTAPクレデンシャルにアクセスできない環境では、アプリケーションレプリケーション機能を使用できます。この機能を使用すると、Astra Controlでストレージバックエンドやそのクレデンシャルを管理することなく、レプリケーションを使用できます。
+*** *アプリケーションのバックアップおよびリストア機能 `ontap-nas-economy` ドライバ・バックアップ・ストレージ・バックエンド*：説明どおり <<nas-eco-backup-restore,上>>。
+
+
+
+
+* * NVMe/TCPストレージを使用するアプリケーションの管理のサポート*
+NVMe / TCPを使用して接続された永続ボリュームでバックアップされたアプリケーションをAstra Controlで管理できるようになりました。
+* *実行フックはデフォルトでオフになっています*:このリリース以降、実行フック機能は次のようになります。 link:../use/execution-hooks.html#enable-the-execution-hooks-feature["有効"] または、セキュリティを強化するために無効にします（デフォルトでは無効になっています）。Astra Controlで使用する実行フックをまだ作成していない場合は、 link:../use/execution-hooks.html#enable-the-execution-hooks-feature["実行フック機能を有効にする"^] フックの作成を開始します。このリリースより前に実行フックを作成した場合、実行フック機能は有効なままになり、通常どおりフックを使用できます。
+
+
+.既知の問題および制限事項
+* link:../release-notes/known-issues.html["このリリースの既知の問題"^]
+* link:../release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+
+
+== 2023年7月31日（23.07.0）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2307/get-started/requirements.html#storage-backends["ストレッチ構成でのNetApp MetroClusterのストレージバックエンドとしての使用のサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2307/get-started/requirements.html#storage-backends["Longhornをストレージバックエンドとして使用するためのサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2307/use/replicate_snapmirror.html#delete-an-application-replication-relationship["同じKubernetesクラスタのONTAPバックエンド間でアプリケーションをレプリケートできるようになりました。"]
+* https://docs.netapp.com/us-en/astra-control-center-2307/use/manage-remote-authentication.html["Astra Control Centerで、リモート（LDAP）ユーザのログイン属性として「userPrincipalName」がサポートされるようになりました。"^]
+* https://docs.netapp.com/us-en/astra-control-center-2307/use/execution-hooks.html["Astra Control Centerを使用してレプリケーションのフェイルオーバー後に新しい実行フックタイプ「post-failover」を実行可能"^]
+* クローンワークフローでは、ライブクローンのみ（管理対象アプリケーションの現在の状態）がサポートされるようになりました。スナップショットまたはバックアップからクローンを作成するには、 https://docs.netapp.com/us-en/astra-control-center-2307/use/restore-apps.html["リストアのワークフロー"^]。
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2307/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2307/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2023年5月18日（23.04.2）
+
+.詳細
+[%collapsible]
+====
+Astra Control Center（23.04.0）向けのこのパッチリリース（23.04.2）では、がサポートされます https://newreleases.io/project/github/kubernetes-csi/external-snapshotter/release/v6.1.0["Kubernetes CSI外部Snapshotコピーv6.1.0"^] およびは、次の項目を修正します。
+
+* 実行フックを使用する場合のインプレースアプリケーションリストアのバグ
+* バケットサービスとの接続に問題があります
+
+
+====
+
+
+== 2023年4月25日（23.04.0）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2304/concepts/licensing.html["Astra Control Centerの新規インストールでは、90日間の評価用ライセンスがデフォルトで有効になります"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/use/execution-hooks.html["強化された実行フック機能と追加のフィルタオプション"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/use/execution-hooks.html["Astra Control Centerでレプリケーションのフェイルオーバー後に実行フックを実行できるようになりました"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/use/restore-apps.html#migrate-from-ontap-nas-economy-storage-to-ontap-nas-storage["「ontap-nas-economy storage」クラスから「ontap-nas」ストレージクラスへのボリュームの移行がサポートされます"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/use/restore-apps.html#filter-resources-during-an-application-restore["リストア処理中のアプリケーションリソースの追加または除外がサポートされます"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/use/manage-apps.html["データ専用アプリケーションの管理がサポートされます"]
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2304/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2304/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2022年11月22日（22.11.0）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2211/use/manage-apps.html#define-apps["複数のネームスペースにまたがるアプリケーションのサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/use/manage-apps.html#define-apps["アプリケーション定義にクラスタリソースを含めることができます"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/use/manage-remote-authentication.html["ロールベースアクセス制御（RBAC）を統合してLDAP認証を強化"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/get-started/requirements.html["Kubernetes 1.25およびポッドセキュリティアドミッション（PSA）のサポートを追加"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/use/monitor-running-tasks.html["バックアップ、リストア、クローニングの各処理の進捗状況レポートが強化されました"^]
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2211/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2022年9月8日（22.08.1）
+
+.詳細
+[%collapsible]
+====
+このパッチリリース（22.08.1）for Astra Control Center（22.08.0）では、NetApp SnapMirrorを使用したアプリケーションレプリケーションの小さなバグが修正されています。
+
+====
+
+
+== 2022年8月10日（22.08.0）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2208/use/replicate_snapmirror.html["NetApp SnapMirrorテクノロジを使用したアプリケーションのレプリケーション"^]
+* https://docs.netapp.com/us-en/astra-control-center-2208/use/manage-apps.html#define-apps["アプリ管理ワークフローの改善"^]
+* https://docs.netapp.com/us-en/astra-control-center-2208/use/execution-hooks.html["拡張された独自の実行フック機能"^]
++
+
+NOTE: ネットアップが提供している、特定のアプリケーションのデフォルトのPre-snapshot実行フックとPost-Snapshot実行フックは、このリリースでは削除されています。このリリースにアップグレードし、スナップショットの実行フックを独自に提供しない場合、Astra Controlはクラッシュコンシステントスナップショットのみを作成します。にアクセスします https://github.com/NetApp/Verda["ネットアップのVerda"^] GitHubリポジトリ：サンプルの実行フックスクリプトを使用します。環境に合わせて変更できます。
+
+* https://docs.netapp.com/us-en/astra-control-center-2208/get-started/requirements.html["VMware Tanzu Kubernetes Grid Integrated Edition（TKGI）のサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2208/get-started/requirements.html#operational-environment-requirements["Google Anthosに対応しています"^]
+* https://docs.netapp.com/us-en/astra-automation-2208/workflows_infra/ldap_prepare.html["LDAP設定（Astra Control API経由）"^]
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2208/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2208/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2022 年 4 月 26 日（ 22.04.0 ）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2204/concepts/user-roles-namespaces.html["ネームスペースのロールベースアクセス制御（ RBAC ）"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/get-started/install_acc-cvo.html["Cloud Volumes ONTAP のサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/get-started/requirements.html#ingress-for-on-premises-kubernetes-clusters["Astra Control Center の一般的な入力イネーブルメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/use/manage-buckets.html#remove-a-bucket["Astra Control からバケットを取り外す"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/get-started/requirements.html#tanzu-kubernetes-grid-cluster-requirements["VMware Tanzu ポートフォリオのサポート"^]
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2204/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2021 年 12 月 14 日（ 21.12 ）
+
+.詳細
+[%collapsible]
+====
+.新機能とサポート
+* https://docs.netapp.com/us-en/astra-control-center-2112/use/restore-apps.html["アプリケーションのリストア"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/use/execution-hooks.html["実行フック"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/get-started/requirements.html#supported-app-installation-methods["ネームスペースを対象とした演算子を使用して展開されたアプリケーションのサポート"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/get-started/requirements.html["アップストリーム Kubernetes と Rancher もサポートしています"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/use/upgrade-acc.html["Astra Control Center のアップグレード"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/get-started/acc_operatorhub_install.html["インストール用の Red Hat OperatorHub オプションです"^]
+
+
+.解決済みの問題
+* https://docs.netapp.com/us-en/astra-control-center-2112/release-notes/resolved-issues.html["このリリースの解決済みの問題"^]
+
+
+.既知の問題および制限事項
+* https://docs.netapp.com/us-en/astra-control-center-2112/release-notes/known-issues.html["このリリースの既知の問題"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"^]
+
+
+====
+
+
+== 2021 年 8 月 5 日（ 21.08 ）
+
+.詳細
+[%collapsible]
+====
+Astra Control Center の初回リリース。
+
+* https://docs.netapp.com/us-en/astra-control-center-2108/concepts/intro.html["それは何であるか"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/concepts/architecture.html["アーキテクチャとコンポーネントを理解する"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/get-started/requirements.html["開始には何が必要ですか"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/get-started/install_acc.html["をインストールします"^] および https://docs.netapp.com/us-en/astra-control-center-2108/get-started/setup_overview.html["セットアップ（ Setup ）"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/use/manage-apps.html["管理"^] および https://docs.netapp.com/us-en/astra-control-center-2108/use/protect-apps.html["保護"^] アプリケーション
+* https://docs.netapp.com/us-en/astra-control-center-2108/use/manage-buckets.html["バケットを管理する"^] および https://docs.netapp.com/us-en/astra-control-center-2108/use/manage-backend.html["ストレージバックエンド"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/use/manage-users.html["アカウントを管理"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/rest-api/api-intro.html["API による自動化"^]
+
+
+====
+
+
+== 詳細については、こちらをご覧ください
+
+* link:../release-notes/known-issues.html["このリリースの既知の問題"]
+* link:../release-notes/known-limitations.html["このリリースの既知の制限事項は以下のとおりです"]
+* link:../acc-earlier-versions.html["以前のバージョンの Astra Control Center ドキュメント"]
+

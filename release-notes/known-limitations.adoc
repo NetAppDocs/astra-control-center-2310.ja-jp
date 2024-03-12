@@ -1,0 +1,228 @@
+---
+sidebar: sidebar 
+permalink: release-notes/known-limitations.html 
+keywords: astra, control center, limitations, known limitations, interoperability 
+summary: 既知の制限事項は、このリリースの製品でサポートされていないプラットフォーム、デバイス、機能、または製品と正しく相互運用できない機能を特定します。これらの制限事項を慎重に確認してください 
+---
+= 既知の制限
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/release-notes/
+
+
+[role="lead"]
+既知の制限事項は、このリリースの製品でサポートされていないプラットフォーム、デバイス、機能、または製品と正しく相互運用できない機能を特定します。これらの制限事項を慎重に確認してください
+
+.クラスタ管理の制限事項
+* <<2 つの Astra Control Center インスタンスで同じクラスタを管理することはできません>>
+* <<Astra Control Center は、同じ名前の 2 つのクラスタを管理できません>>
+
+
+.Role-Based Access Control （ RBAC ；ロールベースアクセス制御）の制限事項があります
+* <<ネームスペースの RBAC に制約があるユーザは、クラスタの追加と管理解除を行うことができます>>
+* <<名前空間の制約を持つメンバは、管理者が名前空間を制約に追加するまで、クローンまたは復元されたアプリケーションにアクセスできません>>
+
+
+.アプリケーション管理の制限
+* <<1つのネームスペース内の複数のアプリケーションをまとめて別のネームスペースにリストアすることはできません>>
+* <<Astra Controlでは、ネームスペースごとに複数のストレージクラスを使用するアプリケーションはサポートされていません>>
+* <<Astra Controlでは、クラウドインスタンスにデフォルトのバケットは自動的に割り当てられません>>
+* <<パスバイリファレンス演算子を使用してインストールされたアプリケーションのクローンが失敗することがあります>>
+* <<証明書マネージャを使用するアプリケーションの In Place リストア処理はサポートされていません>>
+* <<OLM 対応およびクラスタ対象のオペレータ展開アプリケーションはサポートされていません>>
+* <<Helm 2 で展開されたアプリケーションはサポートされていません>>
+* <<特定のバージョンのSnapshotコントローラを含むKubernetes 1.25以降のクラスタでは、Snapshotが失敗することがあります>>
+* <<Astra Control Center インスタンスの削除中にバックアップとスナップショットが保持されない場合があります>>
+
+
+.一般的な制限事項
+* <<LDAPユーザおよびグループの制限事項>>
+* <<Astra Control Center の S3 バケットは、使用可能容量を報告しません>>
+* <<Astra Control Center は、プロキシサーバー用に入力した詳細を検証しません>>
+* <<Postgres ポッドへの既存の接続が原因で障害が発生します>>
+* <<[Activity]ページには、最大10万件のイベントが表示されます>>
+* <<SnapMirrorはストレージバックエンドにNVMe over TCPを使用するアプリケーションをサポートしない>>
+
+
+
+
+== 2 つの Astra Control Center インスタンスで同じクラスタを管理することはできません
+
+別の Astra Control Center インスタンスでクラスタを管理する場合は、最初にを実行する必要があります link:../use/unmanage.html#stop-managing-compute["クラスタの管理を解除します"] 別のインスタンスで管理する前に、管理対象のインスタンスから管理します。管理対象からクラスタを削除したら、次のコマンドを実行してクラスタが管理対象外であることを確認します。
+
+[listing]
+----
+oc get pods n -netapp-monitoring
+----
+そのネームスペースでポッドを実行していないことを確認するか、ネームスペースを存在させないようにします。どちらかが true の場合、クラスタは管理対象外です。
+
+
+
+== Astra Control Center は、同じ名前の 2 つのクラスタを管理できません
+
+既存のクラスタと同じ名前のクラスタを追加しようとすると、処理に失敗します。この問題は、 Kubernetes 構成ファイルでクラスタ名のデフォルトを変更していない場合、通常は標準の Kubernetes 環境で発生します。
+
+回避策として、次の手順を実行します。
+
+. を編集します `kubeadm-config` 構成マップ：
++
+[listing]
+----
+kubectl edit configmaps -n kube-system kubeadm-config
+----
+. を変更します `clusterName` フィールド値の開始値 `kubernetes` （Kubernetesのデフォルト名）を一意のカスタム名に変更します。
+. kubeconfigを編集します (`.kube/config`）。
+. からクラスタ名を更新します `kubernetes` を使用して一意のカスタム名を指定します (`xyz-cluster` は、以下の例で使用されています）。両方で更新を行います `clusters` および `contexts` 次の例に示すように、セクションを示します。
++
+[listing, subs="+quotes"]
+----
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: ExAmPLERb2tCcjZ5K3E2Njk4eQotLExAMpLEORCBDRVJUSUZJQ0FURS0txxxxXX==
+    server: https://x.x.x.x:6443
+  *name: xyz-cluster*
+contexts:
+- context:
+    *cluster: xyz-cluster*
+    namespace: default
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+----
+
+
+
+
+== ネームスペースの RBAC に制約があるユーザは、クラスタの追加と管理解除を行うことができます
+
+ネームスペースの RBAC に制限があるユーザは、クラスタの追加または管理解除を行うことができません。現在の制限により、 Astra は、このようなユーザによるクラスタの管理解除を妨げません。
+
+
+
+== 名前空間の制約を持つメンバは、管理者が名前空間を制約に追加するまで、クローンまたは復元されたアプリケーションにアクセスできません
+
+任意 `member` ネームスペース名/ IDによるRBACの制約があるユーザは、同じクラスタまたは組織のアカウントにある他のクラスタの新しいネームスペースにアプリケーションをクローニングまたはリストアできます。ただし、同じユーザが、クローニングまたはリストアされたアプリケーションに新しいネームスペースからアクセスすることはできません。クローン処理またはリストア処理で新しいネームスペースが作成されると、アカウントの管理者/所有者は `member` 影響を受けるユーザーが新しい名前空間へのアクセスを許可するためのユーザーアカウントの制約を更新します。
+
+
+
+== 1つのネームスペース内の複数のアプリケーションをまとめて別のネームスペースにリストアすることはできません
+
+複数のアプリケーションを1つのネームスペースで管理する場合（Astra Controlで複数のアプリケーション定義を作成する）、すべてのアプリケーションを別の1つのネームスペースにリストアすることはできません。各アプリケーションを専用のネームスペースにリストアする必要があります。
+
+
+
+== Astra Controlでは、ネームスペースごとに複数のストレージクラスを使用するアプリケーションはサポートされていません
+
+Astra Controlは、ネームスペースごとに単一のストレージクラスを使用するアプリケーションをサポートします。ネームスペースにアプリケーションを追加するときは、そのアプリケーションのストレージクラスがネームスペース内の他のアプリケーションと同じであることを確認してください。
+
+
+
+== Astra Controlでは、クラウドインスタンスにデフォルトのバケットは自動的に割り当てられません
+
+Astra Controlでは、どのクラウドインスタンスに対してもデフォルトのバケットが自動的に割り当てられることはありません。クラウドインスタンスのデフォルトバケットは手動で設定する必要があります。デフォルトのバケットが設定されていないと、2つのクラスタ間でアプリケーションのクローニング処理を実行できません。
+
+
+
+== パスバイリファレンス演算子を使用してインストールされたアプリケーションのクローンが失敗することがあります
+
+Astra Control は、名前空間を対象とした演算子でインストールされたアプリケーションをサポートします。これらの演算子は、一般に「パスバイリファレンス」アーキテクチャではなく「パスバイ値」で設計されています。これらのパターンに続くいくつかのオペレータアプリを次に示します。
+
+* https://github.com/k8ssandra/cass-operator["Apache K8ssandra"^]
++
+
+NOTE: K8ssandra では、 In Place リストア処理がサポートされます。新しいネームスペースまたはクラスタにリストアするには、アプリケーションの元のインスタンスを停止する必要があります。これは、ピアグループ情報がインスタンス間通信を行わないようにするためです。アプリケーションのクローニングはサポートされていません。
+
+* https://github.com/jenkinsci/kubernetes-operator["Jenkins CI"^]
+* https://github.com/percona/percona-xtradb-cluster-operator["Percona XtraDB クラスタ"^]
+
+
+Astra Controlでは、「パスバイリファレンス」アーキテクチャ（CockroachDBオペレータなど）で設計されたオペレータをクローニングできない場合があります。クローニング処理では、クローニング処理の一環として独自の新しいシークレットが存在する場合でも、クローニングされたオペレータがソースオペレータから Kubernetes シークレットを参照しようとします。Astra Control がソースオペレータの Kubernetes シークレットを認識しないため、クローニング処理が失敗する場合があります。
+
+
+NOTE: クローン処理中に、IngressClassリソースまたはwebhookを必要とするアプリケーションが正常に機能するためには、これらのリソースがデスティネーションクラスタですでに定義されていない必要があります。
+
+
+
+== 証明書マネージャを使用するアプリケーションの In Place リストア処理はサポートされていません
+
+このリリースの Astra Control Center では、証明書マネージャを使用したアプリのインプレースリストアはサポートされていません。別のネームスペースへのリストア処理とクローニング処理がサポートされています。
+
+
+
+== OLM 対応およびクラスタ対象のオペレータ展開アプリケーションはサポートされていません
+
+Astra Control Center は、クラスタを対象としたオペレータによるアプリケーション管理アクティビティをサポートしません。
+
+
+
+== Helm 2 で展開されたアプリケーションはサポートされていません
+
+Helm を使用してアプリケーションを展開する場合、 Astra Control Center には Helm バージョン 3 が必要です。Helm 3 （または Helm 2 から Helm 3 にアップグレード）を使用して展開されたアプリケーションの管理とクローニングが完全にサポートされています。詳細については、を参照してください link:../get-started/requirements.html["Astra Control Center の要件"]。
+
+
+
+== 特定のバージョンのSnapshotコントローラを含むKubernetes 1.25以降のクラスタでは、Snapshotが失敗することがあります
+
+バージョン1.25以降を実行しているKubernetesクラスタのSnapshotは、クラスタにSnapshotコントローラAPIのバージョンv1beta1がインストールされている場合に失敗することがあります。
+
+既存のKubernetes 1.25以降のインストールをアップグレードする場合は、回避策 として次の手順を実行します。
+
+. 既存のSnapshot CRDと既存のSnapshotコントローラをすべて削除します。
+. https://docs.netapp.com/us-en/trident/trident-managing-k8s/uninstall-trident.html["Astra Trident をアンインストール"^]。
+. https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#deploying-a-volume-snapshot-controller["スナップショットCRDとスナップショットコントローラをインストールします"^]。
+. https://docs.netapp.com/us-en/trident/trident-get-started/kubernetes-deploy.html["最新バージョンのAstra Tridentをインストール"^]。
+. https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#step-1-create-a-volumesnapshotclass["VolumeSnapshotClassを作成します"^]。
+
+
+
+
+== Astra Control Center インスタンスの削除中にバックアップとスナップショットが保持されない場合があります
+
+評価用ライセンスをお持ちの場合は、 Astra Control Center に障害が発生したときに ASUP を送信していないときにデータが失われないように、アカウント ID を必ず保存してください。
+
+
+
+== LDAPユーザおよびグループの制限事項
+
+Astra Control Centerは、最大5,000のリモートグループと10,000のリモートユーザをサポートします。
+
+Astra Controlでは、末尾にスペースがあるRDNを含むDNを持つLDAPエンティティ（ユーザまたはグループ）はサポートされません。
+
+
+
+== Astra Control Center の S3 バケットは、使用可能容量を報告しません
+
+Astra Control Center で管理されているアプリケーションのバックアップまたはクローニングを行う前に、 ONTAP または StorageGRID 管理システムでバケット情報を確認します。
+
+
+
+== Astra Control Center は、プロキシサーバー用に入力した詳細を検証しません
+
+実行することを確認してください link:../use/monitor-protect.html#add-a-proxy-server["正しい値を入力します"] 接続を確立するとき。
+
+
+
+== Postgres ポッドへの既存の接続が原因で障害が発生します
+
+Postgres ポッドで操作を実行する場合は、 psql コマンドを使用するためにポッド内で直接接続しないでください。Astra Control では、 psql にアクセスしてデータベースをフリーズし、解凍する必要があります。既存の接続がある場合、スナップショット、バックアップ、またはクローンは失敗します。
+
+
+
+== [Activity]ページには、最大10万件のイベントが表示されます
+
+[Astra Control Activity]ページには、最大10、000件のイベントを表示できます。ログに記録されたすべてのイベントを表示するには、を使用してイベントを取得します link:../rest-api/api-intro.html["Astra Control API の略"^]。
+
+
+
+== SnapMirrorはストレージバックエンドにNVMe over TCPを使用するアプリケーションをサポートしない
+
+Astra Control Centerでは、NVMe over TCPプロトコルを使用するストレージバックエンドのNetApp SnapMirrorレプリケーションはサポートされません。
+
+
+
+== 詳細については、こちらをご覧ください
+
+* link:../release-notes/known-issues.html["既知の問題"]
+

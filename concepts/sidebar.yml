@@ -1,0 +1,16 @@
+---
+section: concepts
+title: 概念
+entries:
+- title: アーキテクチャとコンポーネント
+  url: "/concepts/architecture.html"
+- title: データ保護
+  url: "/concepts/data-protection.html"
+- title: ライセンス
+  url: "/concepts/licensing.html"
+- title: アプリケーション管理
+  url: "/concepts/app-management.html"
+- title: ストレージクラスと PV サイズ
+  url: "/concepts/choose-class-and-size.html"
+- title: ユーザロールとネームスペース
+  url: "/concepts/user-roles-namespaces.html"

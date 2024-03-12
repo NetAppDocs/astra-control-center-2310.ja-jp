@@ -1,0 +1,422 @@
+---
+sidebar: sidebar 
+permalink: get-started/acc_operatorhub_install.html 
+keywords: how to install astra control center, operator, operatorhub, openshift, install astra control center operator 
+summary: Red Hat OpenShift を使用する場合は、オペレータを使用して Astra Control Center をインストールできます。 
+---
+= OpenShift OperatorHub を使用して Astra Control Center をインストールします
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+[role="lead"]
+Red Hat OpenShift を使用する場合は、 Red Hat 認定オペレータを使用して Astra Control Center をインストールできます。この手順を使用して、から Astra Control Center をインストールします https://catalog.redhat.com/software/operators/explore["Red Hat エコシステムカタログ"^] または、 Red Hat OpenShift Container Platform を使用します。
+
+この手順を完了したら、インストール手順に戻ってを実行する必要があります link:../get-started/install_acc.html#verify-system-status["残りのステップ"^] インストールが成功したかどうかを確認し、ログオンします。
+
+.作業を開始する前に
+* *環境条件を満たしている*： link:requirements.html["インストールを開始する前に、 Astra Control Center の導入環境を準備します"^]。
+* *正常なクラスタオペレータとAPIサービスを確保*：
++
+** OpenShiftクラスタから、すべてのクラスタオペレータが正常な状態にあることを確認します。
++
+[source, console]
+----
+oc get clusteroperators
+----
+** OpenShiftクラスタから、すべてのAPIサービスが正常な状態であることを確認します。
++
+[source, console]
+----
+oc get apiservices
+----
+
+
+* *ルーティング可能なFQDN *：使用するAstra FQDNをクラスタにルーティングできることを確認します。つまり、内部 DNS サーバに DNS エントリがあるか、すでに登録されているコア URL ルートを使用しています。
+* * OpenShiftの権限を取得する*:説明されているインストール手順を実行するには、必要なすべての権限とRed Hat OpenShift Container Platformへのアクセスが必要です。
+* *証明書マネージャの設定*:クラスタに証明書マネージャがすでに存在する場合は、一部の証明書マネージャを実行する必要があります。 link:../get-started/cert-manager-prereqs.html["事前に必要な手順"^] そのため、Astra Control Centerは独自の証明書管理ツールをインストールしません。デフォルトでは、Astra Control Centerはインストール時に独自の証明書マネージャをインストールします。
+* *サービスメッシュを検討*：Astra Controlホストクラスタの通信チャネルは、 link:requirements.html#service-mesh-requirements["サポートされるサービスメッシュ"^]。
++
+.Istioサービスメッシュの詳細
+[%collapsible]
+====
+Istioサービスメッシュを使用するには、次の手順を実行する必要があります。
+
+** を追加します。 `istio-injection:enabled` Astra Control Centerを導入する前に、Astraネームスペースにラベルを付けます。
+** を使用します `Generic` <<generic-ingress,入力設定>> 別のイングレスを提供します。 link:../get-started/install_acc.html#set-up-ingress-for-load-balancing["外部ロードバランシング"^]。
+** Red Hat OpenShiftクラスタの場合は、 `NetworkAttachmentDefinition` 関連付けられているすべてのAstra Control Centerネームスペース (`netapp-acc-operator`、 `netapp-acc`、 `netapp-monitoring` アプリケーションクラスタの場合、または置換されたカスタムネームスペースの場合）。
++
+[listing]
+----
+cat <<EOF | oc -n netapp-acc-operator create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+
+cat <<EOF | oc -n netapp-acc create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+
+cat <<EOF | oc -n netapp-monitoring create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+----
+
+
+====
+* * Kubernetes入力コントローラ*：クラスター内のロードバランシングなどのサービスへの外部アクセスを管理するKubernetes入力コントローラがある場合は、Astra Control Centerで使用するようにセットアップする必要があります。
++
+[%collapsible]
+====
+.. operatorネームスペースを作成します。
++
+[listing]
+----
+oc create namespace netapp-acc-operator
+----
+.. link:../get-started/install_acc.html#set-up-ingress-for-load-balancing["セットアップを完了"^] 入力コントローラのタイプ。
+
+
+====
+* * ONTAP SANドライバのみ*：ONTAP SANドライバを使用している場合は、すべてのKubernetesクラスタでマルチパスが有効になっていることを確認してください。
+
+
+.手順
+* <<Astra Control Centerをダウンロードして展開します>>
+* <<ネットアップAstra kubectlプラグインをインストール>>
+* <<イメージをローカルレジストリに追加します>>
+* <<オペレータインストールページを検索します>>
+* <<オペレータをインストールします>>
+* <<Astra Control Center をインストールします>>
+
+
+
+
+== Astra Control Centerをダウンロードして展開します
+
+NetApp Support SiteからAstra Control Centerバンドルをダウンロードするか、Dockerを使用してAstra Controlサービスのイメージレジストリからバンドルを取得できます。
+
+[role="tabbed-block"]
+====
+.NetApp Support Site
+--
+. Astra Control Centerを含むバンドルをダウンロードします (`astra-control-center-[version].tar.gz`）をクリックします https://mysupport.netapp.com/site/products/all/details/astra-control-center/downloads-tab["Astra Control Centerのダウンロードページ"^]。
+. （推奨ですがオプション）Astra Control Centerの証明書と署名のバンドルをダウンロードします (`astra-control-center-certs-[version].tar.gz`）をクリックして、バンドルのシグネチャを確認します。
++
+.展開して詳細を表示
+[%collapsible]
+=====
+[source, console]
+----
+tar -vxzf astra-control-center-certs-[version].tar.gz
+----
+[source, console]
+----
+openssl dgst -sha256 -verify certs/AstraControlCenter-public.pub -signature certs/astra-control-center-[version].tar.gz.sig astra-control-center-[version].tar.gz
+----
+出力にはと表示されます `Verified OK` 検証が成功したあとに、
+
+=====
+. Astra Control Centerバンドルからイメージを抽出します。
++
+[source, console]
+----
+tar -vxzf astra-control-center-[version].tar.gz
+----
+
+
+--
+.Astra Controlイメージレジストリ
+--
+. Astra Control Serviceにログインします。
+. ダッシュボードで、*[Deploy a self-managed instance of Astra Control]*を選択します。
+. 手順に従ってAstra Controlイメージのレジストリにログインし、Astra Control Centerのインストールイメージを取得してイメージを展開します。
+
+
+--
+====
+
+
+== ネットアップAstra kubectlプラグインをインストール
+
+NetApp Astra kubectlコマンドラインプラグインを使用して、ローカルのDockerリポジトリにイメージをプッシュできます。
+
+.作業を開始する前に
+ネットアップでは、CPUアーキテクチャやオペレーティングシステム別にプラグインのバイナリを提供しています。このタスクを実行する前に、使用しているCPUとオペレーティングシステムを把握しておく必要があります。
+
+.手順
+. 使用可能なNetApp Astra kubectlプラグインのバイナリを表示し、オペレーティングシステムとCPUアーキテクチャに必要なファイルの名前をメモします。
++
+
+NOTE: kubectlプラグインライブラリはtarバンドルの一部であり、フォルダに解凍されます `kubectl-astra`。
+
++
+[source, console]
+----
+ls kubectl-astra/
+----
+. 正しいバイナリを現在のパスに移動し、名前をに変更します `kubectl-astra`：
++
+[source, console]
+----
+cp kubectl-astra/<binary-name> /usr/local/bin/kubectl-astra
+----
+
+
+
+
+== イメージをローカルレジストリに追加します
+
+. コンテナエンジンに応じた手順を実行します。
+
+
+[role="tabbed-block"]
+====
+.Docker です
+--
+. tarballのルートディレクトリに移動します。次のように表示されます。 `acc.manifest.bundle.yaml` ファイルと次のディレクトリ：
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. Astra Control Centerのイメージディレクトリにあるパッケージイメージをローカルレジストリにプッシュします。を実行する前に、次の置換を行ってください `push-images` コマンドを実行します
++
+** <BUNDLE_FILE> をAstra Controlバンドルファイルの名前に置き換えます (`acc.manifest.bundle.yaml`）。
+** <MY_FULL_REGISTRY_PATH> をDockerリポジトリのURLに置き換えます。次に例を示します。 "https://<docker-registry>"[]。
+** <MY_REGISTRY_USER> をユーザ名に置き換えます。
+** <MY_REGISTRY_TOKEN> をレジストリの認証済みトークンに置き換えます。
++
+[source, console]
+----
+kubectl astra packages push-images -m <BUNDLE_FILE> -r <MY_FULL_REGISTRY_PATH> -u <MY_REGISTRY_USER> -p <MY_REGISTRY_TOKEN>
+----
+
+
+
+
+--
+.ポドマン
+--
+. tarballのルートディレクトリに移動します。次のファイルとディレクトリが表示されます。
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. レジストリにログインします。
++
+[source, console]
+----
+podman login <YOUR_REGISTRY>
+----
+. 使用するPodmanのバージョンに合わせてカスタマイズされた次のいずれかのスクリプトを準備して実行します。<MY_FULL_REGISTRY_PATH> を'サブディレクトリを含むリポジトリのURLに置き換えます
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 4*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 3*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+
+NOTE: レジストリ設定に応じて、スクリプトが作成するイメージパスは次のようになります。
+
++
+[listing]
+----
+https://downloads.example.io/docker-astra-control-prod/netapp/astra/acc/23.10.0-68/image:version
+----
+
+
+--
+====
+
+
+== オペレータインストールページを検索します
+
+. 次のいずれかの手順を実行して、オペレータインストールページにアクセスします。
++
+** Red Hat OpenShift Webコンソールから次の手順を実行します。
++
+... OpenShift Container Platform UI にログインします。
+... サイドメニューから、 * 演算子 > OperatorHub * を選択します。
++
+
+NOTE: このオペレータを使用している場合は、Astra Control Centerの最新バージョンにのみアップグレードできます。
+
+... NetApp Astra Control Centerオペレータを検索して選択します。
+
+
++
+image:openshift_operatorhub.png["この画像は、OpenShift Container Platform UIからのAstra Control Centerインストールページを示しています"]
+
+** Red Hat エコシステムカタログから：
++
+... NetApp Astra Control Center を選択します https://catalog.redhat.com/software/operators/detail/611fd22aaf489b8bb1d0f274["演算子"^]。
+... [Deploy and Use] を選択します。
+
+
+
+
++
+image:red_hat_catalog.png["この画像は、RedHatエコシステムカタログから入手できるAstra Control Centerの概要ページを示しています"]
+
+
+
+
+
+== オペレータをインストールします
+
+. 「 * インストールオペレータ * 」ページに必要事項を入力し、オペレータをインストールします。
++
+
+NOTE: オペレータはすべてのクラスタネームスペースで使用できます。
+
++
+.. operator名前空間またはを選択します `netapp-acc-operator` オペレータのインストールの一環として、名前空間が自動的に作成されます。
+.. 手動または自動の承認方法を選択します。
++
+
+NOTE: 手動による承認が推奨されます。1 つのクラスタで実行する演算子インスタンスは 1 つだけです。
+
+.. 「 * Install * 」を選択します。
++
+
+NOTE: 手動承認方式を選択した場合は、このオペレータの手動インストール計画を承認するように求められます。
+
+
+
+. コンソールで、 OperatorHub メニューに移動して、オペレータが正常にインストールされたことを確認します。
+
+
+
+
+== Astra Control Center をインストールします
+
+. Astra Control Centerオペレータの[*Astra Control Center*]タブ内のコンソールから'[*Create AstraControlCenter *]を選択します
+image:openshift_acc-operator_details.png["この画像は、Astra Control Centerタブが選択されているAstra Control Centerオペレータページを示しています"]
+. を実行します `Create AstraControlCenter` フォームフィールド：
++
+.. Astra Control Center の名前を保持または調整します。
+.. Astra Control Centerのラベルを追加します。
+.. AutoSupportを有効または無効にします。Auto Support 機能の保持を推奨します。
+.. Astra Control CenterのFQDNまたはIPアドレスを入力します。入らないでください `http://` または `https://` をクリックします。
+.. Astra Control Centerのバージョンを入力します（例：23.10.0-68）。
+.. アカウント名、 E メールアドレス、および管理者の姓を入力します。
+.. ボリューム再利用ポリシーを選択してください `Retain`、 `Recycle`または `Delete`。デフォルト値はです `Retain`。
+.. インストールのscaleSizeを選択します。
++
+
+NOTE: デフォルトでは、Astraで高可用性（HA）が使用されます。 `scaleSize` の `Medium`ほとんどのサービスをHAに導入し、冗長性を確保するために複数のレプリカを導入します。を使用 `scaleSize` として `Small`Astraは、消費量を削減するための必須サービスを除き、すべてのサービスのレプリカ数を削減します。
+
+.. [[generic-ingress]]入力タイプを選択します。
++
+*** *`Generic`* (`ingressType: "Generic"`）（デフォルト）
++
+このオプションは、別の入力コントローラを使用している場合、または独自の入力コントローラを使用する場合に使用します。Astra Control Centerを導入したら、を設定する必要があります link:../get-started/install_acc.html#set-up-ingress-for-load-balancing["入力コントローラ"^] URLを使用してAstra Control Centerを公開します。
+
+*** *`AccTraefik`* (`ingressType: "AccTraefik"`)
++
+入力コントローラを設定しない場合は、このオプションを使用します。これにより、Astra Control Centerが導入されます `traefik` ゲートウェイをKubernetesの「LoadBalancer」タイプのサービスとして使用します。
+
++
+Astra Control Centerは、タイプ「LoadBalancer」のサービスを使用します。 (`svc/traefik` Astra Control Centerの名前空間）で、アクセス可能な外部IPアドレスが割り当てられている必要があります。お使いの環境でロードバランサが許可されていて、設定されていない場合は、MetalLBまたは別の外部サービスロードバランサを使用して外部IPアドレスをサービスに割り当てることができます。内部 DNS サーバ構成では、 Astra Control Center に選択した DNS 名を、負荷分散 IP アドレスに指定する必要があります。
+
++
+
+NOTE: 「LoadBalancer」およびIngressのサービスタイプの詳細については、を参照してください link:../get-started/requirements.html["要件"^]。
+
+
+
+.. * Image Registry * に、ローカルコンテナイメージのレジストリパスを入力します。入らないでください `http://` または `https://` をクリックします。
+.. 認証が必要なイメージレジストリを使用する場合は、イメージシークレットを入力します。
++
+
+NOTE: 認証が必要なレジストリを使用する場合は、 <<レジストリシークレットを作成します,クラスタでシークレットを作成します>>。
+
+.. 管理者の名を入力します。
+.. リソースの拡張を構成する。
+.. デフォルトのストレージクラスを指定します。
++
+
+NOTE: デフォルトのストレージクラスが設定されている場合は、そのストレージクラスがデフォルトのアノテーションを持つ唯一のストレージクラスであることを確認します。
+
+.. CRD 処理の環境設定を定義します。
+
+
+. YAMLビューを選択して、選択した設定を確認します。
+. 選択するオプション `Create`。
+
+
+
+
+== レジストリシークレットを作成します
+
+認証が必要なレジストリを使用する場合は、OpenShiftクラスタでシークレットを作成し、シークレット名を `Create AstraControlCenter` フォームフィールド。
+
+. Astra Control Centerオペレータの名前空間を作成します。
++
+[listing]
+----
+oc create ns [netapp-acc-operator or custom namespace]
+----
+. この名前空間にシークレットを作成します。
++
+[listing]
+----
+oc create secret docker-registry astra-registry-cred n [netapp-acc-operator or custom namespace] --docker-server=[your_registry_path] --docker username=[username] --docker-password=[token]
+----
++
+
+NOTE: Astra Controlは、Dockerレジストリシークレットのみをサポートします。
+
+. の残りのフィールドに値を入力します <<Astra Control Center をインストールします,Create AstraControlCenterフォーム・フィールド>>。
+
+
+
+
+== 次のステップ
+
+を実行します link:../get-started/install_acc.html#verify-system-status["残りのステップ"^] Astra Control Centerが正常にインストールされたことを確認するには、入力コントローラ（オプション）をセットアップし、UIにログインします。また、を実行する必要があります link:setup_overview.html["セットアップのタスク"^] インストールが完了したら、

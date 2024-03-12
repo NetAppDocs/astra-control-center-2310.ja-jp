@@ -1,0 +1,23 @@
+---
+sidebar: sidebar 
+permalink: acc-earlier-versions.html 
+keywords: what is astra, what are earlier versions 
+summary: 最新バージョンを実行していない場合は、以前のリリースのドキュメントを参照できます。 
+---
+= 以前のバージョンの Astra Control Center ドキュメント
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ./media/
+
+
+[role="lead"]
+以前のリリースのドキュメントを参照できます。
+
+* https://docs.netapp.com/us-en/astra-control-center-2304/index.html["Astra Control Center 23.04のドキュメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2211/index.html["Astra Control Center 22.11ドキュメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2208/index.html["Astra Control Center 22.08ドキュメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2204/index.html["Astra Control Center 22.04 のドキュメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2112/index.html["Astra Control Center 21.12ドキュメント"^]
+* https://docs.netapp.com/us-en/astra-control-center-2108/index.html["Astra Control Center 21.08 ドキュメント"^]
+

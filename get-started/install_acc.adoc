@@ -1,0 +1,1213 @@
+---
+sidebar: sidebar 
+permalink: get-started/install_acc.html 
+keywords: astra installation, install astra control center, how to install astra control, deploy, download from netapp support 
+summary: 環境に関するいくつかの前提条件に対処した後に Astra Control Center をインストールするには、バンドルをダウンロードして、説明されている手順に従ってインストールします。 
+---
+= 標準の手順で Astra Control Center をインストールします
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+[role="lead"]
+Astra Control Centerをインストールするには、NetApp Support Site からインストールバンドルをダウンロードし、次の手順を実行します。この手順を使用して、インターネット接続環境またはエアギャップ環境に Astra コントロールセンターをインストールできます。
+
+.その他のインストール手順については展開してください
+[%collapsible]
+====
+* * Red Hat OpenShift OperatorHubでインストール*：これを使用 link:../get-started/acc_operatorhub_install.html["代替手順"] OperatorHubを使用してOpenShiftにAstra Control Centerをインストールするには、次の手順を実行します。
+* * Cloud Volumes ONTAP バックエンドを使用してパブリッククラウドにインストール*：ユース link:../get-started/install_acc-cvo.html["これらの手順に従います"] Amazon Web Services（AWS）、Google Cloud Platform（GCP）、またはCloud Volumes ONTAP ストレージバックエンドを使用するMicrosoft AzureにAstra Control Centerをインストールするには、次の手順を実行します。
+
+
+====
+Astra Control Centerのインストールプロセスのデモについては、を参照してください https://www.youtube.com/watch?v=eurMV80b0Ks&list=PLdXI3bZJEw7mJz13z7YdiGCS6gNQgV_aN&index=5["このビデオでは"^]。
+
+.作業を開始する前に
+* *環境条件を満たしている*： link:requirements.html["インストールを開始する前に、 Astra Control Center の導入環境を準備します"]。
++
+
+TIP: 3つ目の障害ドメインまたはセカンダリサイトにAstra Control Centerを導入これは、アプリケーションのレプリケーションとシームレスなディザスタリカバリに推奨されます。
+
+
+
+* *正常なサービスを確認*：すべてのAPIサービスが正常な状態で使用可能であることを確認します。
++
+[source, console]
+----
+kubectl get apiservices
+----
+* *ルーティング可能なFQDN *：使用するAstra FQDNをクラスタにルーティングできることを確認します。つまり、内部 DNS サーバに DNS エントリがあるか、すでに登録されているコア URL ルートを使用しています。
+* *証明書マネージャの設定*:クラスタに証明書マネージャがすでに存在する場合は、一部の証明書マネージャを実行する必要があります。 link:../get-started/cert-manager-prereqs.html["事前に必要な手順"^] そのため、Astra Control Centerは独自の証明書マネージャのインストールを試みません。デフォルトでは、Astra Control Centerはインストール時に独自の証明書マネージャをインストールします。
+* * NetApp Astra Controlイメージレジストリにアクセス*：
+Astra Control Provisionerなど、Astra Controlのインストールイメージや機能強化された機能をNetAppイメージレジストリから取得することができます。
++
+.ステップのために展開
+[%collapsible]
+====
+.. レジストリへのログインに必要なAstra ControlアカウントIDを記録します。
++
+アカウントIDはAstra Control Service Web UIで確認できます。ページ右上の図アイコンを選択し、* APIアクセス*を選択して、アカウントIDを書き留めます。
+
+.. 同じページから* APIトークンの生成*を選択し、APIトークン文字列をクリップボードにコピーしてエディターに保存します。
+.. Astra Controlレジストリにログインします。
++
+[source, console]
+----
+docker login cr.astra.netapp.io -u <account-id> -p <api-token>
+----
+
+
+====
+* *サービスメッシュを検討*：Astra Controlホストクラスタの通信チャネルは、 link:requirements.html#service-mesh-requirements["サポートされるサービスメッシュ"^]。
++
+.Istioサービスメッシュの詳細
+[%collapsible]
+====
+Istioサービスメッシュを使用するには、次の手順を実行する必要があります。
+
+** を追加します。 `istio-injection:enabled` <<Astra Control Center とオペレータのインストールを完了します,ラベル>> にアクセスしてからAstra Control Centerを導入する必要があります。
+** を使用します `Generic` <<generic-ingress,入力設定>> 別のイングレスを提供します。 <<ロードバランシング用の入力を設定します,外部ロードバランシング>>。
+** Red Hat OpenShiftクラスタの場合は、 `NetworkAttachmentDefinition` 関連付けられているすべてのAstra Control Centerネームスペース (`netapp-acc-operator`、 `netapp-acc`、 `netapp-monitoring` アプリケーションクラスタの場合、または置換されたカスタムネームスペースの場合）。
++
+[listing]
+----
+cat <<EOF | oc -n netapp-acc-operator create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+
+cat <<EOF | oc -n netapp-acc create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+
+cat <<EOF | oc -n netapp-monitoring create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+----
+
+
+====
+* * ONTAP SANドライバのみ*：ONTAP SANドライバを使用している場合は、すべてのKubernetesクラスタでマルチパスが有効になっていることを確認してください。
+
+
+.手順
+Astra Control Center をインストールするには、次の手順に従います。
+
+* <<Astra Control Centerをダウンロードして展開します>>
+* <<ネットアップAstra kubectlプラグインをインストール>>
+* <<イメージをローカルレジストリに追加します>>
+* <<認証要件を持つレジストリのネームスペースとシークレットを設定します>>
+* <<Astra Control Center オペレータを設置します>>
+* <<Astra Control Center を設定します>>
+* <<Astra Control Center とオペレータのインストールを完了します>>
+* <<システムステータスを確認します>>
+* <<ロードバランシング用の入力を設定します>>
+* <<Astra Control Center UI にログインします>>
+
+
+
+IMPORTANT: Astra Control Centerオペレータ（たとえば、 `kubectl delete -f astra_control_center_operator_deploy.yaml`) Astra Control Centerのインストール中または操作中はいつでも、ポッドを削除しないようにします。
+
+
+
+== Astra Control Centerをダウンロードして展開します
+
+NetApp Support SiteからAstra Control Centerバンドルをダウンロードするか、Dockerを使用してAstra Controlサービスのイメージレジストリからバンドルを取得できます。
+
+[role="tabbed-block"]
+====
+.NetApp Support Site
+--
+. Astra Control Centerを含むバンドルをダウンロードします (`astra-control-center-[version].tar.gz`）をクリックします https://mysupport.netapp.com/site/products/all/details/astra-control-center/downloads-tab["Astra Control Centerのダウンロードページ"^]。
+. （推奨ですがオプション）Astra Control Centerの証明書と署名のバンドルをダウンロードします (`astra-control-center-certs-[version].tar.gz`）をクリックして、バンドルのシグネチャを確認します。
++
+.展開して詳細を表示
+[%collapsible]
+=====
+[source, console]
+----
+tar -vxzf astra-control-center-certs-[version].tar.gz
+----
+[source, console]
+----
+openssl dgst -sha256 -verify certs/AstraControlCenter-public.pub -signature certs/astra-control-center-[version].tar.gz.sig astra-control-center-[version].tar.gz
+----
+出力にはと表示されます `Verified OK` 検証が成功したあとに、
+
+=====
+. Astra Control Centerバンドルからイメージを抽出します。
++
+[source, console]
+----
+tar -vxzf astra-control-center-[version].tar.gz
+----
+
+
+--
+.Astra Controlイメージレジストリ
+--
+. Astra Control Serviceにログインします。
+. ダッシュボードで、*[Deploy a self-managed instance of Astra Control]*を選択します。
+. 手順に従ってAstra Controlイメージのレジストリにログインし、Astra Control Centerのインストールイメージを取得してイメージを展開します。
+
+
+--
+====
+
+
+== ネットアップAstra kubectlプラグインをインストール
+
+NetApp Astra kubectlコマンドラインプラグインを使用して、ローカルのDockerリポジトリにイメージをプッシュできます。
+
+.作業を開始する前に
+ネットアップでは、CPUアーキテクチャやオペレーティングシステム別にプラグインのバイナリを提供しています。このタスクを実行する前に、使用しているCPUとオペレーティングシステムを把握しておく必要があります。
+
+以前のインストールからプラグインがインストールされている場合は、 link:../use/upgrade-acc.html#remove-the-netapp-astra-kubectl-plugin-and-install-it-again["最新バージョンがインストールされていることを確認してください"^] これらの手順を実行する前に。
+
+.手順
+. 使用可能なNetApp Astra kubectlプラグインのバイナリを一覧表示します。
++
+
+NOTE: kubectlプラグインライブラリはtarバンドルの一部であり、フォルダに解凍されます `kubectl-astra`。
+
++
+[source, console]
+----
+ls kubectl-astra/
+----
+. オペレーティングシステムとCPUアーキテクチャに必要なファイルを現在のパスに移動し、次の名前に変更します。 `kubectl-astra`：
++
+[source, console]
+----
+cp kubectl-astra/<binary-name> /usr/local/bin/kubectl-astra
+----
+
+
+
+
+== イメージをローカルレジストリに追加します
+
+. コンテナエンジンに応じた手順を実行します。
+
+
+[role="tabbed-block"]
+====
+.Docker です
+--
+. tarballのルートディレクトリに移動します。次のように表示されます。 `acc.manifest.bundle.yaml` ファイルと次のディレクトリ：
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. Astra Control Centerのイメージディレクトリにあるパッケージイメージをローカルレジストリにプッシュします。を実行する前に、次の置換を行ってください `push-images` コマンドを実行します
++
+** <BUNDLE_FILE> をAstra Controlバンドルファイルの名前に置き換えます (`acc.manifest.bundle.yaml`）。
+** <MY_FULL_REGISTRY_PATH> をDockerリポジトリのURLに置き換えます。次に例を示します。 "https://<docker-registry>"[]。
+** <MY_REGISTRY_USER> をユーザ名に置き換えます。
+** <MY_REGISTRY_TOKEN> をレジストリの認証済みトークンに置き換えます。
++
+[source, console]
+----
+kubectl astra packages push-images -m <BUNDLE_FILE> -r <MY_FULL_REGISTRY_PATH> -u <MY_REGISTRY_USER> -p <MY_REGISTRY_TOKEN>
+----
+
+
+
+
+--
+.ポドマン
+--
+. tarballのルートディレクトリに移動します。次のファイルとディレクトリが表示されます。
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. レジストリにログインします。
++
+[source, console]
+----
+podman login <YOUR_REGISTRY>
+----
+. 使用するPodmanのバージョンに合わせてカスタマイズされた次のいずれかのスクリプトを準備して実行します。<MY_FULL_REGISTRY_PATH> を'サブディレクトリを含むリポジトリのURLに置き換えます
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 4*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 3*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+
+NOTE: レジストリ設定に応じて、スクリプトが作成するイメージパスは次のようになります。
+
++
+[listing]
+----
+https://downloads.example.io/docker-astra-control-prod/netapp/astra/acc/23.10.0-68/image:version
+----
+
+
+--
+====
+
+
+== 認証要件を持つレジストリのネームスペースとシークレットを設定します
+
+. Astra Control Centerホストクラスタのkubeconfigをエクスポートします。
++
+[source, console]
+----
+export KUBECONFIG=[file path]
+----
++
+
+IMPORTANT: インストールを完了する前に、Astra Control Centerをインストールするクラスタをkubeconfigで指定していることを確認してください。
+
+. 認証が必要なレジストリを使用する場合は、次の手順を実行する必要があります。
++
+.ステップのために展開
+[%collapsible]
+====
+.. を作成します `netapp-acc-operator` ネームスペース：
++
+[source, console]
+----
+kubectl create ns netapp-acc-operator
+----
+.. のシークレットを作成します `netapp-acc-operator` ネームスペース：Docker 情報を追加して次のコマンドを実行します。
++
+
+NOTE: プレースホルダ `your_registry_path` 以前にアップロードした画像の場所と一致する必要があります（例： `[Registry_URL]/netapp/astra/astracc/23.10.0-68`）。
+
++
+[source, console]
+----
+kubectl create secret docker-registry astra-registry-cred -n netapp-acc-operator --docker-server=[your_registry_path] --docker-username=[username] --docker-password=[token]
+----
++
+
+NOTE: シークレットの生成後にネームスペースを削除した場合は、ネームスペースを再作成し、ネームスペースのシークレットを再生成します。
+
+.. を作成します `netapp-acc` （またはカスタム名）ネームスペース。
++
+[source, console]
+----
+kubectl create ns [netapp-acc or custom namespace]
+----
+.. のシークレットを作成します `netapp-acc` （またはカスタム名）ネームスペース。Docker 情報を追加して次のコマンドを実行します。
++
+[source, console]
+----
+kubectl create secret docker-registry astra-registry-cred -n [netapp-acc or custom namespace] --docker-server=[your_registry_path] --docker-username=[username] --docker-password=[token]
+----
+
+
+====
+
+
+
+
+== Astra Control Center オペレータを設置します
+
+. ディレクトリを変更します。
++
+[source, console]
+----
+cd manifests
+----
+. Astra Control Centerオペレータ配置YAMLを編集します (`astra_control_center_operator_deploy.yaml`)を参照して、ローカルレジストリとシークレットを参照してください。
++
+[source, console]
+----
+vim astra_control_center_operator_deploy.yaml
+----
++
+
+NOTE: 注釈付きサンプルYAMLは以下の手順に従います。
+
++
+.. 認証が必要なレジストリを使用する場合は、のデフォルト行を置き換えます `imagePullSecrets: []` 次の条件を満たす場合：
++
+[source, console]
+----
+imagePullSecrets: [{name: astra-registry-cred}]
+----
+.. 変更 `ASTRA_IMAGE_REGISTRY` をクリックします `kube-rbac-proxy` でイメージをプッシュしたレジストリパスへのイメージ <<イメージをローカルレジストリに追加します,前の手順>>。
+.. 変更 `ASTRA_IMAGE_REGISTRY` をクリックします `acc-operator-controller-manager` でイメージをプッシュしたレジストリパスへのイメージ <<イメージをローカルレジストリに追加します,前の手順>>。
+
+
++
+.サンプルastra_control_center_operator_deploy.yamlの展開
+[%collapsible]
+====
+[listing, subs="+quotes"]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: acc-operator-controller-manager
+  namespace: netapp-acc-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        *image: ASTRA_IMAGE_REGISTRY/kube-rbac-proxy:v4.8.0*
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        env:
+        - name: ACCOP_LOG_LEVEL
+          value: "2"
+        - name: ACCOP_HELM_INSTALLTIMEOUT
+          value: 5m
+        *image: ASTRA_IMAGE_REGISTRY/acc-operator:23.10.72*
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 300m
+            memory: 750Mi
+          requests:
+            cpu: 100m
+            memory: 75Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+      *imagePullSecrets: []*
+      securityContext:
+        runAsUser: 65532
+      terminationGracePeriodSeconds: 10
+----
+====
+. Astra Control Center オペレータをインストールします。
++
+[source, console]
+----
+kubectl apply -f astra_control_center_operator_deploy.yaml
+----
++
+.回答例を表示するには展開します。
+[%collapsible]
+====
+[listing]
+----
+namespace/netapp-acc-operator created
+customresourcedefinition.apiextensions.k8s.io/astracontrolcenters.astra.netapp.io created
+role.rbac.authorization.k8s.io/acc-operator-leader-election-role created
+clusterrole.rbac.authorization.k8s.io/acc-operator-manager-role created
+clusterrole.rbac.authorization.k8s.io/acc-operator-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/acc-operator-proxy-role created
+rolebinding.rbac.authorization.k8s.io/acc-operator-leader-election-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-proxy-rolebinding created
+configmap/acc-operator-manager-config created
+service/acc-operator-controller-manager-metrics-service created
+deployment.apps/acc-operator-controller-manager created
+----
+====
+. ポッドが実行中であることを確認します
++
+[source, console]
+----
+kubectl get pods -n netapp-acc-operator
+----
+
+
+
+
+== Astra Control Center を設定します
+
+. Astra Control Centerカスタムリソース（CR）ファイルを編集します (`astra_control_center.yaml`)アカウント、サポート、レジストリ、およびその他の必要な設定を行うには、次の手順を実行します。
++
+[source, console]
+----
+vim astra_control_center.yaml
+----
++
+
+NOTE: 注釈付きサンプルYAMLは以下の手順に従います。
+
+. 次の設定を変更または確認します。
++
+.<code>accountName</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `accountName` | を変更します `accountName` stringには、Astra Control Centerアカウントに関連付ける名前を指定します。アカウント名は1つだけです。 | 文字列 | `Example` 
+|===
+====
++
+.<code>astraVersion</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `astraVersion` | 導入するAstra Control Centerのバージョン。この設定には値があらかじめ入力されているため、対処は不要です。 | 文字列 | `23.10.0-68` 
+|===
+====
++
+.<code>astraAddress</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `astraAddress` | を変更します `astraAddress` ブラウザで使用するFQDN（推奨）またはIPアドレスを指定して、Astra Control Centerにアクセスします。このアドレスは、データセンターでAstra Control Centerがどのように検出されるかを定義します。このアドレスは、完了時にロードバランサからプロビジョニングしたFQDNまたはIPアドレスと同じです link:requirements.html["Astra Control Center の要件"^]。
+
+注：は使用しないでください `http://` または `https://` をクリックします。この FQDN をコピーしてで使用します <<Astra Control Center UI にログインします,後の手順>>。 | 文字列 | `astra.example.com` 
+|===
+====
++
+.<code>autoSupport</code>
+[%collapsible]
+====
+このセクションで選択することで、ネットアップのプロアクティブサポートアプリケーション、NetApp Active IQ 、およびデータの送信先のどちらに参加するかが決まります。インターネット接続が必要です（ポート442）。サポートデータはすべて匿名化されます。
+
+|===
+| 設定 | 使用 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `autoSupport.enrolled` | または `enrolled` または `url` フィールドを選択する必要があります | 変更 `enrolled` を選択しますAutoSupport `false` インターネットに接続されていないか、または保持されているサイト `true` 接続されているサイト用。の設定 `true` サポート目的で匿名データをNetAppに送信できるようにします。デフォルトの選択はです `false` およびは、サポートデータがネットアップに送信されないことを示します。 | ブール値 | `false` （デフォルト値） 
+
+
+| `autoSupport.url` | または `enrolled` または `url` フィールドを選択する必要があります | このURLは匿名データの送信先を決定します。 | 文字列 | `https://support.netapp.com/asupprod/post/1.0/postAsup` 
+|===
+====
++
+.<code>email</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `email` | を変更します `email` デフォルトの初期管理者アドレスを表す文字列。この E メールアドレスをコピーしてで使用します <<Astra Control Center UI にログインします,後の手順>>。このEメールアドレスは、最初のアカウントがUIにログインする際のユーザ名として使用され、Astra Controlのイベントが通知されます。 | 文字列 | `admin@example.com` 
+|===
+====
++
+.<code>firstName</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `firstName` | アストラアカウントに関連付けられている初期管理者の名前。ここで使用した名前は、初回ログイン後にUIの見出しに表示されます。 | 文字列 | `SRE` 
+|===
+====
++
+.<code>LastName</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `lastName` | アストラアカウントに関連付けられている初期管理者の姓です。ここで使用した名前は、初回ログイン後にUIの見出しに表示されます。 | 文字列 | `Admin` 
+|===
+====
++
+.<code>imageRegistry</code>
+[%collapsible]
+====
+このセクションで選択すると、Astraアプリケーションイメージ、Astra Control Center Operator、Astra Control Center Helmリポジトリをホストするコンテナイメージレジストリが定義されます。
+
+|===
+| 設定 | 使用 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `imageRegistry.name` | 必須 | でイメージをプッシュしたイメージレジストリの名前 <<Astra Control Center オペレータを設置します,前の手順>>。使用しないでください `http://` または `https://` をレジストリ名に追加します。 | 文字列 | `example.registry.com/astra` 
+
+
+| `imageRegistry.secret` | に入力した文字列の場合は必須です `imageRegistry.name' requires a secret.
+
+IMPORTANT: If you are using a registry that does not require authorization, you must delete this `secret` ラインの内側 `imageRegistry` または、インストールが失敗します。 | イメージレジストリでの認証に使用するKubernetesシークレットの名前。 | 文字列 | `astra-registry-cred` 
+|===
+====
++
+.<code>storageClass</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `storageClass` | を変更します `storageClass` からの値 `ontap-gold` インストール環境で必要な別のAstra Trident storageClassリソースに移動します。コマンドを実行します `kubectl get sc` をクリックして、設定済みの既存のストレージクラスを確認します。Astra Tridentベースのストレージクラスのいずれかをマニフェストファイルに入力する必要があります (`astra-control-center-<version>.manifest`）とをAstra PVSに使用します。設定されていない場合は、デフォルトのストレージクラスが使用されます。
+
+メモ：デフォルトのストレージクラスが設定されている場合は、デフォルトのアノテーションが設定されている唯一のストレージクラスであることを確認してください。 | 文字列 | `ontap-gold` 
+|===
+====
++
+.<code>volumeReclaimPolicy</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | オプション（ Options ） 
+
+
+| `volumeReclaimPolicy` | これにより、AstraのPVSの再利用ポリシーが設定されます。このポリシーをに設定しています `Retain` Astraが削除されたあとに永続的なボリュームを保持このポリシーをに設定しています `Delete` Astraが削除されたあとに永続的ボリュームを削除する。この値が設定されていない場合、PVSは保持されます。 | 文字列  a| 
+** `Retain` （デフォルト値）
+** `Delete`
+
+
+|===
+====
++
+.<code>ingressType</code>
+[#generic-ingress%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | オプション（ Options ） 
+
+
+| `ingressType` | 次の入力タイプのいずれかを使用します。
+
+ `Generic`* (`ingressType: "Generic"`）（デフォルト）
+このオプションは、別の入力コントローラを使用している場合、または独自の入力コントローラを使用する場合に使用します。Astra Control Centerを導入したら、を設定する必要があります link:../get-started/install_acc.html#set-up-ingress-for-load-balancing["入力コントローラ"^] URLを使用してAstra Control Centerを公開します。
+
+重要：Astra Control Centerでサービスメッシュを使用する場合は、 `Generic` 入力タイプとして入力し、独自の設定を行います。 link:../get-started/install_acc.html#set-up-ingress-for-load-balancing["入力コントローラ"^]。
+
+
+*`AccTraefik`* (`ingressType: "AccTraefik"`)
+入力コントローラを設定しない場合は、このオプションを使用します。これにより、Astra Control Centerが導入されます `traefik` Gateway as a Kubernetes LoadBalancer type serviceの略。
+
+Astra Control Centerは、タイプ「LoadBalancer」のサービスを使用します。 (`svc/traefik` Astra Control Centerの名前空間）で、アクセス可能な外部IPアドレスが割り当てられている必要があります。お使いの環境でロードバランサが許可されていて、設定されていない場合は、MetalLBまたは別の外部サービスロードバランサを使用して外部IPアドレスをサービスに割り当てることができます。内部 DNS サーバ構成では、 Astra Control Center に選択した DNS 名を、負荷分散 IP アドレスに指定する必要があります。
+
+注：「LoadBalancer」および「Ingress」のサービスタイプの詳細については、を参照してください link:../get-started/requirements.html["要件"^]。 | 文字列  a| 
+** `Generic` （デフォルト値）
+** `AccTraefik`
+
+
+|===
+====
++
+.<code>scaleSize</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | オプション（ Options ） 
+
+
+| `scaleSize` | デフォルトでは、Astraで高可用性（HA）が使用されます。 `scaleSize` の `Medium`ほとんどのサービスをHAに導入し、冗長性を確保するために複数のレプリカを導入します。を使用 `scaleSize` として `Small`Astraは、消費量を削減するための必須サービスを除き、すべてのサービスのレプリカ数を削減します。
+
+ヒント： `Medium` 環境は約100個のポッドで構成されています（一時的なワークロードは含まれません）。100個のポッドは、3つのマスターノードと3つのワーカーノード構成に基づいています）。特にディザスタリカバリのシナリオを検討する場合は、環境で問題 となる可能性があるポッド単位のネットワーク制限に注意してください。 | 文字列  a| 
+** `Small`
+** `Medium` （デフォルト値）
+
+
+|===
+====
++
+.<code>astraResourcesScaler</code>
+[%collapsible]
+====
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | オプション（ Options ） 
+
+
+| `astraResourcesScaler` | AstraeControlCenterリソース制限のスケーリングオプションデフォルトでは、Astra Control CenterはAstra内のほとんどのコンポーネントに対してリソース要求を設定して展開します。この構成により、アプリケーションの負荷と拡張性が高い環境では、Astra Control Centerソフトウェアスタックのパフォーマンスが向上します。
+
+ただし、小規模な開発またはテストクラスタを使用するシナリオでは、CRフィールドを使用します `astraResourcesScalar` に設定できます `Off`。これにより、リソース要求が無効になり、小規模なクラスタへの導入が可能になります。 | 文字列  a| 
+** `Default` （デフォルト値）
+** `Off`
+
+
+|===
+====
++
+.<code>additionalValues</code>
+[%collapsible]
+====
+
+IMPORTANT: インストール時に既知の問題が表示されないように、Astra Control CenterのCRに次の値を追加します。
+
+[listing]
+----
+additionalValues:
+    keycloak-operator:
+      livenessProbe:
+        initialDelaySeconds: 180
+      readinessProbe:
+        initialDelaySeconds: 180
+----
+** アストラルコントロールセンターおよびCloud Insights 通信では、TLS証明書の検証はデフォルトで無効になっています。の次のセクションを追加して、Cloud Insights とAstra Control Centerのホストクラスタと管理対象クラスタの両方の間の通信に対してTLS証明書の検証を有効にすることができます `additionalValues`。
+
+
+[listing]
+----
+  additionalValues:
+    netapp-monitoring-operator:
+      config:
+        ciSkipTlsVerify: false
+    cloud-insights-service:
+      config:
+        ciSkipTlsVerify: false
+    telemetry-service:
+      config:
+        ciSkipTlsVerify: false
+----
+====
++
+.<code>crds</code>
+[%collapsible]
+====
+このセクションで選択した内容によって、Astra Control CenterでのCRDの処理方法が決まります。
+
+|===
+| 設定 | ガイダンス（Guidance） | を入力します | 例 
+
+
+| `crds.externalCertManager` | 外部証明書マネージャを使用する場合は、変更します `externalCertManager` 終了： `true`。デフォルト `false` Astra Control Centerが、インストール時に独自の証明書マネージャCRDをインストールするようにします。
+
+SSDはクラスタ全体のオブジェクトであり、クラスタの他の部分に影響を及ぼす可能性があります。このフラグを使用すると、これらのCRDがAstra Control Centerの外部にあるクラスタ管理者によってインストールおよび管理されることをAstra Control Centerに伝えることができます。 | ブール値 | `False` （デフォルト値） 
+
+
+| `crds.externalTraefik` | デフォルトでは、Astra Control Centerは必要なTraefik CRDをインストールします。SSDはクラスタ全体のオブジェクトであり、クラスタの他の部分に影響を及ぼす可能性があります。このフラグを使用すると、これらのCRDがAstra Control Centerの外部にあるクラスタ管理者によってインストールおよび管理されることをAstra Control Centerに伝えることができます。 | ブール値 | `False` （デフォルト値） 
+|===
+====
+
+
+
+IMPORTANT: インストールを完了する前に、構成に適したストレージクラスと入力タイプを選択していることを確認してください。
+
+.サンプルのastra_control_center.yamlを展開します。
+[%collapsible]
+====
+[listing, subs="+quotes"]
+----
+apiVersion: astra.netapp.io/v1
+kind: AstraControlCenter
+metadata:
+  name: astra
+spec:
+  accountName: "Example"
+  astraVersion: "ASTRA_VERSION"
+  astraAddress: "astra.example.com"
+  autoSupport:
+    enrolled: true
+  email: "[admin@example.com]"
+  firstName: "SRE"
+  lastName: "Admin"
+  imageRegistry:
+    name: "[your_registry_path]"
+    secret: "astra-registry-cred"
+  storageClass: "ontap-gold"
+  volumeReclaimPolicy: "Retain"
+  ingressType: "Generic"
+  scaleSize: "Medium"
+  astraResourcesScaler: "Default"
+  additionalValues:
+    keycloak-operator:
+      livenessProbe:
+        initialDelaySeconds: 180
+      readinessProbe:
+        initialDelaySeconds: 180
+  crds:
+    externalTraefik: false
+    externalCertManager: false
+----
+====
+
+
+== Astra Control Center とオペレータのインストールを完了します
+
+. 前の手順でまだ行っていない場合は、を作成します `netapp-acc` （またはカスタム）ネームスペース：
++
+[source, console]
+----
+kubectl create ns [netapp-acc or custom namespace]
+----
+. Astra Control Centerでサービスメッシュを使用している場合は、 `netapp-acc` またはカスタムネームスペース：
++
+
+IMPORTANT: 入力タイプ (`ingressType`）をに設定する必要があります。 `Generic` このコマンドを実行する前に、Astra Control Center CRで確認する必要があります。
+
++
+[source, console]
+----
+kubectl label ns [netapp-acc or custom namespace] istio-injection:enabled
+----
+. （推奨） https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/["厳密なMTLを有効にする"^] Istioサービスメッシュの場合：
++
+[source, console]
+----
+kubectl apply -n istio-system -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+spec:
+  mtls:
+    mode: STRICT
+EOF
+----
+. にAstra Control Centerをインストールします `netapp-acc` （またはカスタムの）ネームスペース：
++
+[source, console]
+----
+kubectl apply -f astra_control_center.yaml -n [netapp-acc or custom namespace]
+----
+
+
+
+IMPORTANT: Astra Control Centerのオペレータが環境要件の自動チェックを実行ありません link:../get-started/requirements.html["要件"^] 原因 でインストールが失敗するか、Astra Control Centerが正常に動作しない可能性があります。を参照してください <<システムステータスを確認します,次のセクション>> 自動システムチェックに関連する警告メッセージをチェックします。
+
+
+
+== システムステータスを確認します
+
+kubectlコマンドを使用すると、システムステータスを確認できます。OpenShift を使用する場合は、同等の OC コマンドを検証手順に使用できます。
+
+.手順
+. インストールプロセスで検証チェックに関連する警告メッセージが生成されなかったことを確認します。
++
+[source, console]
+----
+kubectl get acc [astra or custom Astra Control Center CR name] -n [netapp-acc or custom namespace] -o yaml
+----
++
+
+NOTE: その他の警告メッセージは、Astra Control Centerのオペレータログでも報告されます。
+
+. 自動化された要件チェックによって報告された環境の問題を修正します。
++
+
+NOTE: 問題を解決するには、環境がを満たしていることを確認します link:../get-started/requirements.html["要件"^] （Astra Control Center向け）。
+
+. すべてのシステムコンポーネントが正常にインストールされたことを確認します。
++
+[source, console]
+----
+kubectl get pods -n [netapp-acc or custom namespace]
+----
++
+各ポッドのステータスがになっている必要があります `Running`。システムポッドが展開されるまでに数分かかることがあります。
+
++
+.サンプル応答のために展開
+[%collapsible]
+====
+[listing, subs="+quotes"]
+----
+NAME                                          READY   STATUS      RESTARTS     AGE
+acc-helm-repo-6cc7696d8f-pmhm8                1/1     Running     0            9h
+activity-597fb656dc-5rd4l                     1/1     Running     0            9h
+activity-597fb656dc-mqmcw                     1/1     Running     0            9h
+api-token-authentication-62f84                1/1     Running     0            9h
+api-token-authentication-68nlf                1/1     Running     0            9h
+api-token-authentication-ztgrm                1/1     Running     0            9h
+asup-669d4ddbc4-fnmwp                         1/1     Running     1 (9h ago)   9h
+authentication-78789d7549-lk686               1/1     Running     0            9h
+bucketservice-65c7d95496-24x7l                1/1     Running     3 (9h ago)   9h
+cert-manager-c9f9fbf9f-k8zq2                  1/1     Running     0            9h
+cert-manager-c9f9fbf9f-qjlzm                  1/1     Running     0            9h
+cert-manager-cainjector-dbbbd8447-b5qll       1/1     Running     0            9h
+cert-manager-cainjector-dbbbd8447-p5whs       1/1     Running     0            9h
+cert-manager-webhook-6f97bb7d84-4722b         1/1     Running     0            9h
+cert-manager-webhook-6f97bb7d84-86kv5         1/1     Running     0            9h
+certificates-59d9f6f4bd-2j899                 1/1     Running     0            9h
+certificates-59d9f6f4bd-9d9k6                 1/1     Running     0            9h
+certificates-expiry-check-28011180--1-8lkxz   0/1     Completed   0            9h
+cloud-extension-5c9c9958f8-jdhrp              1/1     Running     0            9h
+cloud-insights-service-5cdd5f7f-pp8r5         1/1     Running     0            9h
+composite-compute-66585789f4-hxn5w            1/1     Running     0            9h
+composite-volume-68649f68fd-tb7p4             1/1     Running     0            9h
+credentials-dfc844c57-jsx92                   1/1     Running     0            9h
+credentials-dfc844c57-xw26s                   1/1     Running     0            9h
+entitlement-7b47769b87-4jb6c                  1/1     Running     0            9h
+features-854d8444cc-c24b7                     1/1     Running     0            9h
+features-854d8444cc-dv6sm                     1/1     Running     0            9h
+fluent-bit-ds-9tlv4                           1/1     Running     0            9h
+fluent-bit-ds-bpkcb                           1/1     Running     0            9h
+fluent-bit-ds-cxmwx                           1/1     Running     0            9h
+fluent-bit-ds-jgnhc                           1/1     Running     0            9h
+fluent-bit-ds-vtr6k                           1/1     Running     0            9h
+fluent-bit-ds-vxqd5                           1/1     Running     0            9h
+graphql-server-7d4b9d44d5-zdbf5               1/1     Running     0            9h
+identity-6655c48769-4pwk8                     1/1     Running     0            9h
+influxdb2-0                                   1/1     Running     0            9h
+keycloak-operator-55479d6fc6-slvmt            1/1     Running     0            9h
+krakend-f487cb465-78679                       1/1     Running     0            9h
+krakend-f487cb465-rjsxx                       1/1     Running     0            9h
+license-64cbc7cd9c-qxsr8                      1/1     Running     0            9h
+login-ui-5db89b5589-ndb96                     1/1     Running     0            9h
+loki-0                                        1/1     Running     0            9h
+metrics-facade-8446f64c94-x8h7b               1/1     Running     0            9h
+monitoring-operator-6b44586965-pvcl4          2/2     Running     0            9h
+nats-0                                        1/1     Running     0            9h
+nats-1                                        1/1     Running     0            9h
+nats-2                                        1/1     Running     0            9h
+nautilus-85754d87d7-756qb                     1/1     Running     0            9h
+nautilus-85754d87d7-q8j7d                     1/1     Running     0            9h
+openapi-5f9cc76544-7fnjm                      1/1     Running     0            9h
+openapi-5f9cc76544-vzr7b                      1/1     Running     0            9h
+packages-5db49f8b5-lrzhd                      1/1     Running     0            9h
+polaris-consul-consul-server-0                1/1     Running     0            9h
+polaris-consul-consul-server-1                1/1     Running     0            9h
+polaris-consul-consul-server-2                1/1     Running     0            9h
+polaris-keycloak-0                            1/1     Running     2 (9h ago)   9h
+polaris-keycloak-1                            1/1     Running     0            9h
+polaris-keycloak-2                            1/1     Running     0            9h
+polaris-keycloak-db-0                         1/1     Running     0            9h
+polaris-keycloak-db-1                         1/1     Running     0            9h
+polaris-keycloak-db-2                         1/1     Running     0            9h
+polaris-mongodb-0                             1/1     Running     0            9h
+polaris-mongodb-1                             1/1     Running     0            9h
+polaris-mongodb-2                             1/1     Running     0            9h
+polaris-ui-66fb99479-qp9gq                    1/1     Running     0            9h
+polaris-vault-0                               1/1     Running     0            9h
+polaris-vault-1                               1/1     Running     0            9h
+polaris-vault-2                               1/1     Running     0            9h
+public-metrics-76fbf9594d-zmxzw               1/1     Running     0            9h
+storage-backend-metrics-7d7fbc9cb9-lmd25      1/1     Running     0            9h
+storage-provider-5bdd456c4b-2fftc             1/1     Running     0            9h
+task-service-87575df85-dnn2q                  1/1     Running     3 (9h ago)   9h
+task-service-task-purge-28011720--1-q6w4r     0/1     Completed   0            28m
+task-service-task-purge-28011735--1-vk6pd     1/1     Running     0            13m
+telegraf-ds-2r2kw                             1/1     Running     0            9h
+telegraf-ds-6s9d5                             1/1     Running     0            9h
+telegraf-ds-96jl7                             1/1     Running     0            9h
+telegraf-ds-hbp84                             1/1     Running     0            9h
+telegraf-ds-plwzv                             1/1     Running     0            9h
+telegraf-ds-sr22c                             1/1     Running     0            9h
+telegraf-rs-4sbg8                             1/1     Running     0            9h
+telemetry-service-fb9559f7b-mk9l7             1/1     Running     3 (9h ago)   9h
+tenancy-559bbc6b48-5msgg                      1/1     Running     0            9h
+traefik-d997b8877-7xpf4                       1/1     Running     0            9h
+traefik-d997b8877-9xv96                       1/1     Running     0            9h
+trident-svc-585c97548c-d25z5                  1/1     Running     0            9h
+vault-controller-88484b454-2d6sr              1/1     Running     0            9h
+vault-controller-88484b454-fc5cz              1/1     Running     0            9h
+vault-controller-88484b454-jktld              1/1     Running     0            9h
+----
+====
+. （オプション） `acc-operator` 進捗状況を監視するログ：
++
+[source, console]
+----
+kubectl logs deploy/acc-operator-controller-manager -n netapp-acc-operator -c manager -f
+----
++
+
+NOTE: `accHost` クラスタの登録は最後の処理の1つです。登録に失敗しても原因 の導入は失敗しません。ログにクラスタ登録エラーが記録されている場合は、を使用して再度登録を試行できます link:../get-started/setup_overview.html#add-cluster["UIでクラスタワークフローを追加します"^] または API 。
+
+. すべてのポッドが実行中の場合は、インストールが正常に完了したことを確認します (`READY` はです `True`）を使用して、Astra Control Centerにログインするときに使用する初期セットアップパスワードを取得します。
++
+[source, console]
+----
+kubectl get AstraControlCenter -n [netapp-acc or custom namespace]
+----
++
+対応：
+
++
+[listing]
+----
+NAME    UUID                                  VERSION     ADDRESS         READY
+astra   9aa5fdae-4214-4cb7-9976-5d8b4c0ce27f  23.10.0-68   10.111.111.111  True
+----
++
+
+IMPORTANT: UUIDの値をコピーします。パスワードはです `ACC-` 続けてUUIDの値を指定します (`ACC-[UUID]` または、この例では、 `ACC-9aa5fdae-4214-4cb7-9976-5d8b4c0ce27f`）。
+
+
+
+
+
+== ロードバランシング用の入力を設定します
+
+サービスへの外部アクセスを管理するKubernetes入力コントローラを設定できます。これらの手順では、デフォルトのを使用した場合の入力コントローラの設定例を示します `ingressType: "Generic"` Astra Control Centerのカスタムリソース (`astra_control_center.yaml`）。を指定した場合、この手順 を使用する必要はありません `ingressType: "AccTraefik"` Astra Control Centerのカスタムリソース (`astra_control_center.yaml`）。
+
+Astra Control Center を展開したら、 Astra Control Center を URL で公開するように入力コントローラを設定する必要があります。
+
+セットアップ手順は、使用する入力コントローラのタイプによって異なります。Astra Control Centerは、多くの入力コントローラタイプをサポートしています。ここでは、一部の一般的な入力コントローラタイプの設定手順の例を示します。
+
+.作業を開始する前に
+* が必要です https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/["入力コントローラ"] すでに導入されている必要があります。
+* 。 https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class["入力クラス"] 入力コントローラに対応するものがすでに作成されている必要があります。
+
+
+.Istio Ingressの手順
+[%collapsible]
+====
+. Istio Ingressを設定します。
++
+
+NOTE: この手順 では、「デフォルト」の構成プロファイルを使用してIstioが導入されていることを前提としています。
+
+. 入力ゲートウェイに必要な証明書と秘密鍵ファイルを収集または作成します。
++
+CA署名証明書または自己署名証明書を使用できます。共通名はAstraアドレス（FQDN）である必要があります。
+
++
+コマンド例：
+
++
+[source, console]
+----
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt
+----
+. シークレットを作成します `tls secret name` を入力します `kubernetes.io/tls` でTLS秘密鍵と証明書を使用する場合 `istio-system namespace` TLSシークレットで説明されているように、
++
+コマンド例：
+
++
+[source, console]
+----
+kubectl create secret tls [tls secret name] --key="tls.key" --cert="tls.crt" -n istio-system
+----
++
+
+TIP: シークレットの名前はと一致する必要があります `spec.tls.secretName` で提供されます `istio-ingress.yaml` ファイル。
+
+. に入力リソースを配置します `netapp-acc` （またはカスタムネームスペース）。スキーマにはv1リソースタイプを使用します (`istio-Ingress.yaml` は次の例で使用されています）。
++
+[listing]
+----
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: istio
+spec:
+  controller: istio.io/ingress-controller
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: [netapp-acc or custom namespace]
+spec:
+  ingressClassName: istio
+  tls:
+  - hosts:
+    - <ACC address>
+    secretName: [tls secret name]
+  rules:
+  - host: [ACC address]
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: traefik
+            port:
+              number: 80
+----
+. 変更を適用します。
++
+[source, console]
+----
+kubectl apply -f istio-Ingress.yaml
+----
+. 入力のステータスを確認します。
++
+[source, console]
+----
+kubectl get ingress -n [netapp-acc or custom namespace]
+----
++
+対応：
+
++
+[listing]
+----
+NAME    CLASS HOSTS             ADDRESS         PORTS   AGE
+ingress istio astra.example.com 172.16.103.248  80, 443 1h
+----
+. <<Astra Control Center を設定します,Astra Control Centerのインストールを完了します>>。
+
+
+====
+.Nginx Ingress Controller の手順
+[%collapsible]
+====
+. タイプのシークレットを作成します `kubernetes.io/tls` でTLSの秘密鍵と証明書を使用する場合 `netapp-acc` （またはカスタム名前付き）ネームスペース。を参照してください https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets["TLS シークレット"]。
+. 入力リソースをに配置します `netapp-acc` （またはカスタムネームスペース）。スキーマにはv1リソースタイプを使用します (`nginx-Ingress.yaml` は次の例で使用されています）。
++
+[source, yaml]
+----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netapp-acc-ingress
+  namespace: [netapp-acc or custom namespace]
+spec:
+  ingressClassName: [class name for nginx controller]
+  tls:
+  - hosts:
+    - <ACC address>
+    secretName: [tls secret name]
+  rules:
+  - host: <ACC address>
+    http:
+      paths:
+        - path:
+          backend:
+            service:
+              name: traefik
+              port:
+                number: 80
+          pathType: ImplementationSpecific
+----
+. 変更を適用します。
++
+[source, console]
+----
+kubectl apply -f nginx-Ingress.yaml
+----
+
+
+
+WARNING: ネットアップでは、nginxコントローラをではなく導入環境としてインストールすることを推奨します `daemonSet`。
+
+====
+.OpenShift 入力コントローラの手順
+[%collapsible]
+====
+. 証明書を調達し、 OpenShift ルートで使用できるようにキー、証明書、および CA ファイルを取得します。
+. OpenShift ルートを作成します。
++
+[source, console]
+----
+oc create route edge --service=traefik --port=web -n [netapp-acc or custom namespace] --insecure-policy=Redirect --hostname=<ACC address> --cert=cert.pem --key=key.pem
+----
+
+
+====
+
+
+== Astra Control Center UI にログインします
+
+Astra Control Center をインストールした後、デフォルトの管理者のパスワードを変更し、 Astra Control Center UI ダッシュボードにログインします。
+
+.手順
+. ブラウザで、（を含む）FQDNを入力します `https://` プレフィックス）を使用します `astraAddress` を参照してください `astra_control_center.yaml` CR When（時間） <<Astra Control Center を設定します,Astra Control Center をインストールした>>。
+. プロンプトが表示されたら、自己署名証明書を承認します。
++
+
+NOTE: カスタム証明書はログイン後に作成できます。
+
+. Astra Control Centerのログインページで、に使用した値を入力します `email` インチ `astra_control_center.yaml` CR When（時間） <<Astra Control Center を設定します,Astra Control Center をインストールした>>をクリックし、次に初期セットアップパスワードを入力します (`ACC-[UUID]`）。
++
+
+NOTE: 誤ったパスワードを 3 回入力すると、管理者アカウントは 15 分間ロックされます。
+
+. [*Login*] を選択します。
+. プロンプトが表示されたら、パスワードを変更します。
++
+
+NOTE: 初めてログインしたときにパスワードを忘れ、他の管理ユーザアカウントがまだ作成されていない場合は、にお問い合わせください https://mysupport.netapp.com/site/["ネットアップサポート"] パスワード回復のサポートを受けるには、
+
+. （オプション）既存の自己署名 TLS 証明書を削除して、に置き換えます link:../get-started/configure-after-install.html#add-a-custom-tls-certificate["認証局（ CA ）が署名したカスタム TLS 証明書"^]。
+
+
+
+
+== インストールのトラブルシューティングを行います
+
+いずれかのサービスがにある場合 `Error` ステータスを確認すると、ログを調べることができます。400 ~ 500 の範囲の API 応答コードを検索します。これらは障害が発生した場所を示します。
+
+.オプション（ Options ）
+* Astra Control Center のオペレータログを調べるには、次のように入力します。
++
+[source, console]
+----
+kubectl logs deploy/acc-operator-controller-manager -n netapp-acc-operator -c manager -f
+----
+* Astra Control Center CRの出力を確認するには、次の手順を実行します。
++
+[listing]
+----
+kubectl get acc -n [netapp-acc or custom namespace] -o yaml
+----
+
+
+
+
+== 次のステップ
+
+* （オプション）お使いの環境に応じて、インストール後に実行します link:configure-after-install.html["設定手順"]。
+* を実行して導入を完了します link:setup_overview.html["セットアップのタスク"]。
+

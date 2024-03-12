@@ -1,0 +1,41 @@
+---
+sidebar: sidebar 
+permalink: concepts/choose-class-and-size.html 
+keywords: service level, storage class, storage classes, pv size, persistent volume size, volume size, bandwidth, performance, persistent, volume, kubernetes, containers 
+summary: Astra Control Centerはさまざまなストレージバックエンドをサポートします。  ストレージクラスと永続的ボリュームのサイズがパフォーマンス目標の達成にどのように役立つかを理解しておく必要があります。 
+---
+= ストレージクラスと永続的ボリュームサイズ
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/concepts/
+
+
+[role="lead"]
+Astra Control Centerでは、NetApp ONTAPとLonghornがストレージバックエンドとしてサポートされます。
+
+
+
+== 概要
+
+Astra Control Center は、次の機能をサポートします。
+
+* * ONTAP ストレージを基盤とするAstra Tridentストレージクラス*：ONTAP バックエンドを使用している場合、Astra Control CenterでONTAP バックエンドをインポートしてさまざまな監視情報をレポートすることができます。
+* *LonghornによってサポートされるCSIベースのストレージクラス*: Longhorn Container Storage Interface (CSI)ドライバでLonghornを使用できます。
+
+
+
+NOTE: Astra Tridentのストレージクラスは、Astra Control Center以外で事前に設定する必要があります。
+
+
+
+== ストレージクラス
+
+Astra Control Centerにクラスタを追加する場合は、そのクラスタで以前に設定したストレージクラスをデフォルトのストレージクラスとして選択するように求められます。このストレージクラスは、永続ボリューム要求（ PVC ）でストレージクラスが指定されていない場合に使用されます。デフォルトのストレージクラスは、 Astra Control Center 内でいつでも変更できます。また、 PVC または Helm チャート内のストレージクラスの名前を指定することで、任意のストレージクラスをいつでも使用できます。Kubernetes クラスタにデフォルトのストレージクラスが 1 つだけ定義されていることを確認します。
+
+
+
+== を参照してください。
+
+* https://docs.netapp.com/us-en/trident/index.html["Astra Trident のドキュメント"^]
+

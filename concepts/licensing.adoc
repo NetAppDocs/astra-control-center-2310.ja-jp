@@ -1,0 +1,65 @@
+---
+sidebar: sidebar 
+permalink: concepts/licensing.html 
+keywords: license, licensing 
+summary: Astra Control Center で実行できる操作は、ライセンスの状態に応じて異なります。また、 Astra Control Center を使用するとライセンスの消費にどのような影響があるかについても説明します。 
+---
+= ライセンス
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/concepts/
+
+
+[role="lead"]
+Astra Control Centerを導入すると、4、800 CPUユニットの90日間の評価ライセンスが組み込まれてインストールされます。容量の追加や評価期間の延長が必要な場合、またはフルライセンスにアップグレードする場合は、ネットアップから別の評価用ライセンスまたはフルライセンスを取得できます。
+
+次のいずれかの方法でライセンスを取得します。
+
+* Astra Control Centerを評価する際に、組み込みの評価用ライセンスと異なる評価条件が必要な場合は、ネットアップに連絡して別の評価用ライセンスファイルをリクエストしてください。
+* link:https://mysupport.netapp.com/site/["Astra Control Centerを購入済みの場合は、ネットアップライセンスファイル（NLF）を生成する"^] NetApp Support Site にログインし、[Systems]メニューからソフトウェアライセンスに移動します。
+
+
+ONTAP ストレージバックエンドに必要なライセンスの詳細については、を参照してください link:../get-started/requirements.html["サポートされるストレージバックエンド"]。
+
+
+NOTE: ライセンスで有効になっているCPUユニットが必要な数以上であることを確認してください。Astra Control Centerで現在管理しているCPUユニット数が、適用する新しいライセンスで使用可能なCPUユニット数を超えると、新しいライセンスを適用できなくなります。
+
+
+
+== 評価用ライセンスとフルライセンス
+
+Astra Control Centerの新しいインストールには、評価用ライセンスが組み込まれています。評価用ライセンスでは、フルライセンスと同じ機能を制限付き（90日間）で使用できます。評価期間が終了したら、フル機能を使用するにはフルライセンスが必要です。
+
+
+
+== ライセンスの有効期限
+
+アクティブなAstra Control Centerのライセンスが期限切れになると、次の機能のUIおよびAPI機能は使用できなくなります。
+
+* ローカルのスナップショットとバックアップを手動で実行します
+* スケジュールされたローカルSnapshotおよびバックアップ
+* Snapshot またはバックアップからのリストア
+* Snapshot または現在の状態からクローニングしています
+* 新しいアプリケーションの管理
+* レプリケーションポリシーを設定しています
+
+
+
+
+== ライセンス消費量の計算方法
+
+新しいクラスタを Astra Control Center に追加しても、クラスター上で実行されているアプリケーションの少なくとも 1 つが Astra Control Center によって管理されるまで、使用済みのライセンスにはカウントされません。
+
+クラスタでアプリケーションの管理を開始すると、そのクラスタのすべてのCPUユニットがAstra Control Centerのライセンス消費に含まれます。ただし、でラベルを使用して報告されるRed Hat OpenShiftクラスタノードのCPUユニットは除きます `node-role.kubernetes.io/infra: ""`。
+
+
+NOTE: Red Hat OpenShiftインフラノードでは、Astra Control Centerのライセンスは使用されません。ノードをインフラストラクチャノードとしてマークするには、ラベルを適用します `node-role.kubernetes.io/infra: ""` ノードに追加します。
+
+
+
+== 詳細については、こちらをご覧ください
+
+* link:../get-started/setup_overview.html#add-a-license-for-astra-control-center["Astra Control Centerの初回セットアップ時にライセンスを追加します"]
+* link:../use/update-licenses.html["既存のライセンスを更新する"]
+
