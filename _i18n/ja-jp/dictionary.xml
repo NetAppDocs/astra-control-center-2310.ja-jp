@@ -2426,7 +2426,6 @@ NVMe / TCPを使用して接続された永続ボリュームでバックアッ�
   <block id="7c90d436f62a080a98e02874957865e0" category="inline-link-macro">これらの手順に従います</block>
   <block id="41bdd90cead20f2dddf0647e2f48fc13" category="list-text">* Cloud Volumes ONTAP バックエンドを使用してパブリッククラウドにインストール*：ユース <block ref="cdbba4f6294205e74dc04d0ee99d1d1f" category="inline-link-macro-rx"></block> Amazon Web Services（AWS）、Google Cloud Platform（GCP）、またはCloud Volumes ONTAP ストレージバックエンドを使用するMicrosoft AzureにAstra Control Centerをインストールするには、次の手順を実行します。</block>
   <block id="201e09e85ad81db8a19ef9f20c05d1a5" category="inline-link">このビデオでは</block>
-  <block id="259f3be9b6c8eefb44e844c2b70333dc" category="paragraph">Astra Control Centerのインストールプロセスのデモについては、を参照してください<block ref="cbbdec23221803dc148346abe5a297c0" category="inline-link-rx"></block>。</block>
   <block id="2b305f607904d67cd2da521366334e8c" category="inline-link-macro">インストールを開始する前に、 Astra Control Center の導入環境を準備します</block>
   <block id="748a7a1711b184c4e02102a84264406d" category="list-text">*環境条件を満たしている*： <block ref="689b20f2e0a9cb0a12bc48475b3f81ee" category="inline-link-macro-rx"></block>。</block>
   <block id="f96c06e8efd6770cb5f76e8c3aa4238f" category="admonition">3つ目の障害ドメインまたはセカンダリサイトにAstra Control Centerを導入これは、アプリケーションのレプリケーションとシームレスなディザスタリカバリに推奨されます。</block>
@@ -3527,4 +3526,5 @@ Astra Tridentは、インポートと検出のプロセスで自動的にイン�
   <block id="a9cf730f8ab04a5b52f1d19c74c1483c" category="paragraph">Astra Control Centerは、AutoSupportとActive IQのデジタルアドバイザ（デジタルアドバイザとも呼ばれます）エコシステムに完全に統合されており、ユーザとNetAppサポートにトラブルシューティングと使用状況の情報を提供します。</block>
   <block id="d89b38e0f587f8fa359a431abd35bb40" category="paragraph">このセクションで選択した内容によって、NetAppのプロアクティブサポートアプリケーション、デジタルアドバイザ、およびデータの送信先が決まります。インターネット接続が必要です（ポート442）。サポートデータはすべて匿名化されます。</block>
   <block id="3cf9bc07c0ae31018d3336b8f32de6c8" category="list-text">Digital Advisorを使用します。</block>
+  <block id="285c7fb54a928cf8e9ca78a83740ce60" category="paragraph">Astra Control Centerのインストールプロセスのデモについては、を参照してください<block ref="d97427b76746d487a682c110ed41c817" category="inline-link-rx"></block>。</block>
 </blocks>
